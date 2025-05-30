@@ -1,0 +1,183 @@
+:root {
+  /* Light mode (default) */
+  --background-primary: #f5f7fa;
+  --background-secondary: #e4efe9;
+  --background-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+
+  --text-primary: #333333;
+  --text-secondary: #4a5568;
+  --text-tertiary: #6c757d;
+
+  --surface-primary: rgba(255, 255, 255, 0.9);
+  --surface-secondary: rgba(255, 255, 255, 0.7);
+  --surface-tertiary: rgba(245, 247, 250, 0.85);
+
+  --border-color: rgba(255, 255, 255, 0.3);
+  --shadow-color: rgba(31, 38, 135, 0.15);
+  --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+  --primary-color: #4e54c8;
+  --primary-hover: #3a40a5;
+  --success-color: #28a745;
+  --failure-color: #dc3545;
+
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(45deg, #ff6b6b, #ff9f43);
+
+  --blur-intensity: blur(12px);
+  --board-light: #f0d9b5;
+  --board-dark: #b58863;
+
+  /* Chess board colors */
+  --chess-light-square: #f0d9b5;
+  --chess-dark-square: #b58863;
+  --chess-selected: rgba(20, 85, 30, 0.5);
+  --chess-valid-move: rgba(20, 85, 30, 0.2);
+  --chess-last-move: rgba(155, 199, 0, 0.41);
+  --chess-highlight: rgba(255, 255, 0, 0.45);
+  --chess-check: rgba(255, 0, 0, 0.45);
+  --chess-notation-light: rgba(0, 0, 0, 0.6);
+  --chess-notation-dark: rgba(255, 255, 255, 0.8);
+
+  /* Animation and transition */
+  --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2.5rem;
+  --spacing-xl: 4rem;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Instruction card background */
+  --card-background: #343434;
+  --card-text: #f5f5f5;
+}
+
+/* Dark mode theme */
+[data-theme="dark"] {
+  --background-primary: #121212;
+  --background-secondary: #1e1e1e;
+  --background-gradient: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+
+  --surface-primary: rgba(30, 30, 30, 0.9);
+  --surface-secondary: rgba(40, 40, 40, 0.7);
+  --surface-tertiary: rgba(50, 50, 50, 0.85);
+
+  --border-color: rgba(70, 70, 70, 0.6);
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+
+  --primary-color: #6366f1;
+  --primary-hover: #4f46e5;
+
+  /* Chess board colors for dark mode */
+  --chess-light-square: #aaaaaa;
+  --chess-dark-square: #555555;
+  --chess-selected: rgba(50, 140, 70, 0.6);
+  --chess-valid-move: rgba(50, 140, 70, 0.3);
+  --chess-last-move: rgba(180, 224, 31, 0.5);
+  --chess-highlight: rgba(255, 255, 80, 0.5);
+  --chess-check: rgba(255, 70, 70, 0.6);
+  --chess-notation-light: rgba(0, 0, 0, 0.7);
+  --chess-notation-dark: rgba(255, 255, 255, 0.9);
+
+  --board-light: #aaaaaa;
+  --board-dark: #555555;
+
+  /* Instruction card background */
+  --card-background: #262626;
+  --card-text: #f5f5f5;
+}
+
+/* Custom scrollbar for Apple style experience */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.5);
+  border-radius: 10px;
+  border: 2px solid var(--surface-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
+}
+
+/* Improving form elements for Apple style */
+button, input, select, textarea {
+  font-family: 'Montserrat', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+  transition: var(--transition-all);
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  background-color: var(--surface-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Ensure the dark mode card is styled correctly regardless of theme */
+.dark-mode-card {
+  background-color: var(--card-background) !important;
+  color: var(--card-text) !important;
+}
+
+.dark-mode-card p,
+.dark-mode-card li,
+.dark-mode-card ul,
+.dark-mode-card strong,
+.dark-mode-card h3,
+.dark-mode-card h4 {
+  color: var(--card-text) !important;
+}

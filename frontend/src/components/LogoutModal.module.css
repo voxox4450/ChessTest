@@ -1,0 +1,165 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 460px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.3s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(250, 250, 250, 1) 100%);
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #D32F2F;
+  font-size: 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 12px;
+}
+
+.modalContent {
+  margin-bottom: 24px;
+}
+
+.modalContent p {
+  margin: 12px 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+.modalContent strong {
+  color: #D32F2F;
+  font-weight: 600;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.modalButton {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background: #F5F5F5;
+  color: #333;
+  border: 1px solid #E0E0E0;
+}
+
+.confirmButton {
+  background: #D32F2F;
+  color: white;
+  box-shadow: 0 2px 5px rgba(211, 47, 47, 0.3);
+}
+
+.cancelButton:hover {
+  background: #E0E0E0;
+}
+
+.confirmButton:hover {
+  background: #B71C1C;
+  transform: translateY(-2px);
+}
+
+.confirmButton:active {
+  transform: translateY(0);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .modal {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .modalButtons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modalButton {
+    width: 100%;
+  }
+}
+
+.sessionInfo {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sessionInfo p {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.progressInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progressInfo span {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.progressBar {
+  height: 8px;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(to right, #4e54c8, #8f94fb);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.confirmQuestion {
+  font-weight: 600 !important;
+  margin-top: 20px !important;
+  color: #333 !important;
+  text-align: center;
+}

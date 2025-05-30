@@ -1,0 +1,15 @@
+{
+  "name": "chess-research-pragma-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "chess-research-pragma-frontend": "file:",
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}

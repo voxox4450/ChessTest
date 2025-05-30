@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+This is project for running experimient aming at chess learing.
+
+App should be initutiwe for user, store results, have no bugs, use good style.

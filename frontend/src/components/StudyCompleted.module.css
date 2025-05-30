@@ -1,0 +1,149 @@
+.completedContainer {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+}
+
+.completedContent {
+  max-width: 800px;
+  width: 100%;
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(250, 250, 250, 1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.completionIcon {
+  color: #4CAF50;
+  margin-bottom: 20px;
+  animation: popIn 0.5s ease-out forwards;
+}
+
+.completedContent h1 {
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.thankYou {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  color: #555;
+  font-weight: 500;
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.username {
+  color: #4e54c8;
+  font-weight: 700;
+}
+
+.messageSection {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: left;
+  animation: fadeIn 1.2s ease-out forwards;
+}
+
+.messageSection p {
+  margin: 10px 0;
+  line-height: 1.6;
+  color: #444;
+}
+
+.contactSection {
+  margin-bottom: 30px;
+  width: 100%;
+  animation: fadeIn 1.4s ease-out forwards;
+}
+
+.contactSection h2 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.contactSection p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.logoutButton {
+  background: #4e54c8;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(78, 84, 200, 0.3);
+  animation: fadeIn 1.6s ease-out forwards;
+}
+
+.logoutButton:hover {
+  background: #3a3f99;
+  transform: translateY(-2px);
+}
+
+.logoutButton:active {
+  transform: translateY(0);
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .completedContent {
+    padding: 25px;
+  }
+
+  .completedContent h1 {
+    font-size: 2rem;
+  }
+
+  .thankYou {
+    font-size: 1.2rem;
+  }
+
+  .logoutButton {
+    padding: 10px 25px;
+    font-size: 1rem;
+  }
+}

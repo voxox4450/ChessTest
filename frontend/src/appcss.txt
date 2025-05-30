@@ -1,0 +1,624 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .modeSelector {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .modeSelectorButton {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-all);
+  }
+
+  .modeSelectorButton.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-hover);
+  }
+
+  .modeSelectorButton:hover {
+    background-color: var(--surface-secondary);
+  }
+
+  .modeSelectorButton.active:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .puzzleContainer {
+    margin-top: 2rem;
+  }
+
+  .puzzleModeSelector {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .puzzleModeButton {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--surface-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-all);
+  }
+
+  .puzzleModeButton.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: transparent;
+  }
+
+  .puzzleModeButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px var(--shadow-color);
+  }
+
+  .trainerContainer {
+    text-align: center;
+  }
+
+  .modeSelection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    background-color: var(--background-primary);
+  }
+
+  .userInfoPanel {
+    background-color: var(--surface-primary);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+  }
+
+  .userInfoPanel h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+  }
+
+  .userInfoPanel p {
+    margin: 5px 0;
+    color: var(--text-secondary);
+  }
+
+  .modeButtons {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .modeButtons button {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: var(--transition-all);
+  }
+
+  .modeButtons button:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .appWrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--background-primary);
+  }
+
+  .appContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+  }
+
+  .headerBar {
+    position: sticky;
+    top: 0;
+    background-color: var(--surface-primary);
+    backdrop-filter: var(--blur-intensity);
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+  }
+
+  .userInfo {
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .logoutButton {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-all);
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  .logoutButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--shadow-color);
+  }
+
+  .loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    background-color: var(--surface-primary);
+    backdrop-filter: var(--blur-intensity);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 800px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+  }
+
+  .loadingContainer h2 {
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+  }
+
+  .sessionStart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background-color: var(--surface-primary);
+    backdrop-filter: var(--blur-intensity);
+    border-radius: var(--radius-xl);
+    margin: 2rem auto;
+    max-width: 800px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+  }
+
+  .startSessionContainer {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--surface-secondary);
+    border-radius: var(--radius-lg);
+    margin-top: 2rem;
+    width: 100%;
+    box-shadow: 0 4px 16px var(--shadow-color);
+  }
+
+  .startSessionContainer h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .startSessionContainer p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  .startSessionButton {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-all);
+    box-shadow: 0 4px 12px var(--shadow-color);
+    margin-top: 1rem;
+  }
+
+  .startSessionButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px var(--shadow-color);
+  }
+
+  .startSessionButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #cccccc;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .instructionsContainer {
+    max-width: 1000px;
+    width: 90%;
+    margin: 2rem auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .instructionsContainer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30L30 0L0 0L0 30L30 30L60 30L60 0L30 0L30 30L30 60L60 60L60 30L30 30L0 30L0 60L30 60L30 30Z' fill='currentColor' fill-opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    z-index: -1;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .instructions {
+    background: var(--surface-primary, #222);
+    border-radius: var(--radius-xl, 16px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 2rem;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .instructions:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  }
+
+  .instructions h2 {
+    font-size: 2.2rem;
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary, #fff);
+    font-weight: 700;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary-color, #7160e8) 0%, var(--accent-color, #9f8aff) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    width: 100%;
+  }
+
+  .instructions h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary-color, #7160e8), transparent);
+    border-radius: 3px;
+  }
+
+  .instructionsContent {
+    background: var(--surface-secondary, #2a2a2a);
+    border-radius: var(--radius-lg, 12px);
+    padding: 1.8rem;
+    margin-bottom: 2rem;
+    position: relative;
+    border-left: 4px solid var(--primary-color, #7160e8);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .instructionsContent p {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.9));
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .instructionsContent p:first-of-type {
+    position: relative;
+    padding-left: 30px;
+  }
+
+  .instructionsContent p:first-of-type::before {
+    content: '♟';
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.4rem;
+    color: var(--primary-color, #7160e8);
+    opacity: 0.8;
+  }
+
+  .instructionsContent ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .instructionsContent li {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.9));
+    margin-bottom: 0.7rem;
+    font-size: 1.05rem;
+    position: relative;
+    padding-left: 10px;
+    list-style-type: none;
+  }
+
+  .instructionsContent li::before {
+    content: '♙';
+    position: absolute;
+    left: -18px;
+    font-size: 1rem;
+    color: var(--primary-color, #7160e8);
+    opacity: 0.8;
+  }
+
+  .finalSessionNote {
+    background: rgba(113, 96, 232, 0.1);
+    border-radius: var(--radius-md, 8px);
+    padding: 1.2rem;
+    margin: 1.5rem 0;
+    border: 1px solid rgba(113, 96, 232, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+
+  .finalSessionNote::before {
+    content: '♕';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2.5rem;
+    color: var(--primary-color, #7160e8);
+    opacity: 0.1;
+  }
+
+  .finalSessionNote p {
+    margin: 0;
+  }
+
+  .finalSessionNote strong {
+    color: var(--primary-color, #7160e8);
+    font-weight: 600;
+  }
+
+  .waitMessage {
+    background: var(--surface-secondary, #2a2a2a);
+    border-radius: var(--radius-lg, 12px);
+    padding: 1.8rem;
+    text-align: center;
+    border-left: 4px solid var(--warning-color, #ffc107);
+    animation: pulseWait 3s infinite ease-in-out;
+  }
+
+  @keyframes pulseWait {
+    0%, 100% { border-left-color: var(--warning-color, #ffc107); }
+    50% { border-left-color: var(--primary-color, #7160e8); }
+  }
+
+  .waitMessage h3 {
+    color: var(--warning-color, #ffc107);
+    margin-top: 0;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .waitMessage p {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.9));
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+  }
+
+  .startPrompt {
+    text-align: center;
+    padding: 1.5rem;
+    animation: fadeIn 0.8s ease;
+  }
+
+  .startPrompt h3 {
+    color: var(--text-primary, #fff);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .startSessionButton {
+    background: linear-gradient(135deg, var(--primary-color, #7160e8), var(--accent-color, #9f8aff));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md, 8px);
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(113, 96, 232, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .startSessionButton::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+  }
+
+  .startSessionButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(113, 96, 232, 0.5);
+  }
+
+  .startSessionButton:hover::before {
+    left: 100%;
+  }
+
+  .startSessionButton:disabled {
+    background: var(--disabled-color, #666);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  /* Light theme overrides */
+  :global([data-theme="light"]) .instructions {
+    background-color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  :global([data-theme="light"]) .instructionsContent {
+    background-color: #f5f7ff;
+  }
+
+  :global([data-theme="light"]) .instructionsContent p,
+  :global([data-theme="light"]) .instructionsContent li {
+    color: #2d2a45;
+  }
+
+  :global([data-theme="light"]) .waitMessage {
+    background-color: #fff8e6;
+  }
+
+  :global([data-theme="light"]) .waitMessage p {
+    color: #2d2a45;
+  }
+
+  :global([data-theme="light"]) .finalSessionNote {
+    background-color: rgba(80, 69, 228, 0.05);
+    border-color: rgba(80, 69, 228, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    .instructionsContainer {
+      width: 95%;
+      margin: 1rem auto;
+    }
+
+    .instructions {
+      padding: 1.5rem;
+    }
+
+    .instructions h2 {
+      font-size: 1.8rem;
+    }
+
+    .instructionsContent {
+      padding: 1.2rem;
+    }
+
+    .instructionsContent p,
+    .waitMessage p {
+      font-size: 1rem;
+    }
+
+    .instructionsContent li {
+      font-size: 0.95rem;
+    }
+
+    .startSessionButton {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      width: 100%;
+    }
+  }
+
+  /* Header actions with theme toggle */
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* User profile */
+  .userProfile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* App title styling */
+  .appTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+  }
+
+  .profileIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  /* Styles for loader */
+  .loader {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 576px) {
+    .headerBar {
+      padding: 0.75rem;
+    }
+
+    .headerActions {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
