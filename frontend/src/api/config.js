@@ -2,7 +2,7 @@ import config from '../config';
 
 // Force production URL in deployed environment
 const API_BASE = process.env.NODE_ENV === 'production'
-  ? 'https://chesskhbackend.azurewebsites.net/api'
+  ? 'https://chesshkbackend.azurewebsites.net/api'
   : `${config.apiBaseUrl}/api`;
 
 export const API_URL = API_BASE;
