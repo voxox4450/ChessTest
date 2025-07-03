@@ -64,9 +64,7 @@ const Login = ({ onLoginSuccess }) => {
                 localStorage.setItem('access_token', userData.access_token);
                 localStorage.setItem('user_id', userData.user_id);
                 localStorage.setItem('username', userData.username);
-                localStorage.setItem('group_id', userData.group_id);
-                localStorage.setItem('current_session', userData.current_session);
-                console.log(`User registered: ${username}, Group: ${userData.group_id}, Session: ${userData.current_session}`);
+                console.log(`User registered: ${username}`);
                 onLoginSuccess();
             } else {
                 try {
@@ -74,18 +72,16 @@ const Login = ({ onLoginSuccess }) => {
                     localStorage.setItem('access_token', userData.access_token);
                     localStorage.setItem('user_id', userData.user_id);
                     localStorage.setItem('username', userData.username);
-                    localStorage.setItem('group_id', userData.group_id);
-                    localStorage.setItem('current_session', userData.current_session);
                     if (userData.next_available_at) {
                         localStorage.setItem('next_available_at', userData.next_available_at);
                     }
-                    console.log(`User logged in: ${username}, Group: ${userData.group_id}, Session: ${userData.current_session}`);
+                    console.log(`User logged in: ${username}`);
                     onLoginSuccess();
                 } catch (dbError) {
                     console.warn('Direct DB login failed:', dbError);
                     if (dbError.response && dbError.response.status === 403 && dbError.response.data.next_available_at) {
                         setNextAvailableTime(new Date(dbError.response.data.next_available_at));
-                        setHoursLeft(dbError.response.data.hours_left || 24);
+                        setHoursLeft(dbError.response.data.hours_left || 0);
                         setError('You cannot login yet. Please wait 24 hours between sessions.');
                     } else {
                         console.warn('Trying API login');
@@ -107,8 +103,6 @@ const Login = ({ onLoginSuccess }) => {
         }
     };
     
-
-
     const formatNextAvailable = () => {
         if (!nextAvailableTime) return '';
         return nextAvailableTime.toLocaleString('en-US', {
@@ -125,7 +119,7 @@ const Login = ({ onLoginSuccess }) => {
     return (
         <div className={styles.loginContainer}>
             <div className={styles.appTitleContainer}>
-                <h1 className={styles.appTitle}>Chess Research Project</h1>
+                <h1 className={styles.appTitle}>Chess Research Project Test</h1>
                 <div className={styles.themeToggleWrapper}>
                     <ThemeToggle />
                 </div>
@@ -157,12 +151,6 @@ const Login = ({ onLoginSuccess }) => {
                 {error && (
                     <div className={styles.error}>
                         <p>{error}</p>
-                        {nextAvailableTime && (
-                            <div className={styles.timeRestriction}>
-                                <p>You can login again in approximately {hoursLeft} hour{hoursLeft !== 1 ? 's' : ''}.</p>
-                                <p>Next available: {formatNextAvailable()}</p>
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -211,7 +199,6 @@ const Login = ({ onLoginSuccess }) => {
                     </div>
                 )}
 
-
                 <button
                     type="submit"
                     disabled={loading || (isRegistering && !checkboxAccepted)}
@@ -226,7 +213,6 @@ const Login = ({ onLoginSuccess }) => {
                         </>
                     )}
                 </button>
-
 
                 <div className={styles.switchModeContainer}>
                     <button

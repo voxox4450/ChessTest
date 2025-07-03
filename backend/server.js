@@ -5,7 +5,9 @@ const sqlite3 = require("sqlite3").verbose();
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const bcrypt = require("bcrypt");
+const { error } = require("console");
 const saltRounds = 10;
+//const axios = require("axios");
 
 // Initialize Express app
 const app = express();
@@ -60,12 +62,8 @@ const initDb = () => {
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      group_id INTEGER NOT NULL,
-      current_session INTEGER NOT NULL DEFAULT 1,
-      FOREIGN KEY (group_id) REFERENCES groups(id)
-    )
-  `,
+      password TEXT NOT NULL
+    )`,
     (err) => {
       if (err) {
         console.error("Error creating users table:", err.message);
@@ -84,8 +82,8 @@ const initDb = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         exercise_id INTEGER NOT NULL,
-        session_id INTEGER NOT NULL,
         is_solved BOOLEAN NOT NULL,
+        selected_motive TEXT, 
         attempts INTEGER NOT NULL DEFAULT 0,
         correct_moves INTEGER NOT NULL DEFAULT 0,
         incorrect_moves INTEGER NOT NULL DEFAULT 0,
@@ -93,8 +91,7 @@ const initDb = () => {
         completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (exercise_id) REFERENCES exercises(id),
-        FOREIGN KEY (session_id) REFERENCES sessions(id)
+        FOREIGN KEY (exercise_id) REFERENCES exercises_test(id)
       )
     `,
       (err) => {
@@ -115,7 +112,6 @@ const initDb = () => {
       CREATE TABLE IF NOT EXISTS session_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
-        session_id INTEGER NOT NULL,
         start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         end_time TIMESTAMP,
         total_time_seconds INTEGER,
@@ -123,8 +119,7 @@ const initDb = () => {
         puzzles_solved INTEGER NOT NULL DEFAULT 0,
         completed BOOLEAN NOT NULL DEFAULT 0,
         next_available_at TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (session_id) REFERENCES sessions(id)
+        FOREIGN KEY (user_id) REFERENCES users(id)
       )
     `,
       (err) => {
@@ -188,77 +183,62 @@ app.post("/api/users/register", (req, res) => {
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
       }
-
-      // Count users to determine group (simple round-robin)
-      db.get("SELECT COUNT(*) as count FROM users", [], (err, result) => {
+      // Hash password
+      bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
         if (err) {
-          console.error("Error counting users:", err.message);
+          console.error("Error hashing password:", err.message);
           return res
             .status(500)
             .json({ error: "Server error during registration" });
         }
 
-        const userCount = result.count;
-        const assignedGroup = (userCount % 4) + 1; // Groups 1-4
-
-        // Hash password
-        bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-          if (err) {
-            console.error("Error hashing password:", err.message);
-            return res
-              .status(500)
-              .json({ error: "Server error during registration" });
-          }
-
-          // Insert new user with hashed password
-          db.run(
-            "INSERT INTO users (username, password, group_id, current_session) VALUES (?, ?, ?, ?)",
-            [username, hashedPassword, assignedGroup, 1],
-            function (err) {
-              if (err) {
-                console.error("Error inserting user:", err.message);
-                return res
-                  .status(500)
-                  .json({ error: "Server error during registration" });
-              }
-
-              const userId = this.lastID;
-
-              // Generate token
-              const token = jwt.sign(
-                { id: userId, username, group_id: assignedGroup },
-                JWT_SECRET,
-                { expiresIn: "24h" }
-              );
-
-              // Log registration
-              console.log(
-                `User registered: ${username}, Group: ${assignedGroup}, Session: 1`
-              );
-
-              res.status(201).json({
-                message: "User registered successfully",
-                user_id: userId,
-                username,
-                group_id: assignedGroup,
-                current_session: 1,
-                access_token: token,
-              });
+        // Insert new user with hashed password
+        db.run(
+          "INSERT INTO users (username, password) VALUES (?, ?)",
+          [username, hashedPassword],
+          function (err) {
+            if (err) {
+              console.error("Error inserting user:", err.message);
+              return res
+                .status(500)
+                .json({ error: "Server error during registration" });
             }
-          );
-        });
+
+            const userId = this.lastID;
+
+            // Generate token
+            const token = jwt.sign(
+              { id: userId, username},
+              JWT_SECRET,
+              { expiresIn: "24h" }
+            );
+
+            // Log registration
+            console.log(
+              `User registered: ${username}`
+            );
+
+            res.status(201).json({
+              message: "User registered successfully",
+              user_id: userId,
+              username,
+              access_token: token,
+            });
+          }
+        );
       });
-    }
-  );
-});
+    });
+  }
+);
 
 // User login
+// TODO: sprawdzenie czy jest 5 sesji z backu bartka na mój 
 app.post("/api/users/login", (req, res) => {
   const { username, password } = req.body;
 
   // Find user
   db.get(
-    "SELECT id, username, password, group_id, current_session FROM users WHERE username = ?",
+    "SELECT id, username, password FROM users WHERE username = ?",
     [username],
     (err, user) => {
       if (err) {
@@ -282,9 +262,29 @@ app.post("/api/users/login", (req, res) => {
             .status(401)
             .json({ error: "Invalid username or password" });
         }
+        //axios.get(`https://chessbsbackend.azurewebsites.net/api/session-status/${user.id}`, {
 
-        // Check if there's a completed session and if 24 hours have passed
+        // })
+        // .then(response => {
+        //   const { sessions_completed, next_available_at } = response.data;
+        //   const now = new Date();
+
+        //   if (sessions_completed >= 5 && next_available_at) {
+        //     const nextAvailable = new Date(next_available_at);
+
+        //     if (now < nextAvailable) {
+        //       const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
+        //       return res.status(403).json({
+        //         error:
+        //           "You have completed all sessions. Please wait until your final session delay is over before starting the test.",
+        //         next_available_at,
+        //         hours_left: hoursLeft,
+        //       });
+        //     }
+        //   }
+        // Check if there's a completed session
         db.get(
+          // checking for 5 completed sessions elsewhere.
           "SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1",
           [user.id],
           (err, lastSession) => {
@@ -309,24 +309,25 @@ app.post("/api/users/login", (req, res) => {
 
                 return res.status(403).json({
                   error:
-                    "You cannot login yet. Please wait 24 hours between sessions.",
+                    "You cannot login yet. Please end all 5 sessions before you start test.",
                   next_available_at: lastSession.next_available_at,
                   hours_left: hoursLeft,
                 });
               }
             }
+          
 
             // If we get here, the user can login
             // Generate token
             const token = jwt.sign(
-              { id: user.id, username: user.username, group_id: user.group_id },
+              { id: user.id, username: user.username},
               JWT_SECRET,
               { expiresIn: "24h" }
             );
 
             // Log login
             console.log(
-              `User logged in: ${user.username}, Group: ${user.group_id}, Session: ${user.current_session}`
+              `User logged in: ${user.username}`
             );
 
             // Add next_available_at to the response if it exists
@@ -334,8 +335,6 @@ app.post("/api/users/login", (req, res) => {
               message: "Login successful",
               user_id: user.id,
               username: user.username,
-              group_id: user.group_id,
-              current_session: user.current_session,
               access_token: token,
             };
 
@@ -350,242 +349,122 @@ app.post("/api/users/login", (req, res) => {
     }
   );
 });
+//});
 
-// Update user session (requires auth)
-app.post("/api/users/:userId/next-session", authenticateToken, (req, res) => {
-  const { userId } = req.params;
-  const { current_session } = req.body;
+// // Update user complete exercise (requires auth)
+// app.get("/api/users/:userId/session-status", authenticateToken, (req, res) => {
+//   const { userId } = req.params;
 
-  db.get(
-    "SELECT current_session FROM users WHERE id = ?",
-    [userId],
-    (err, user) => {
-      if (err) {
-        console.error("Error finding user:", err.message);
-        return res
-          .status(500)
-          .json({ error: "Server error during session update" });
-      }
+//   db.get(
+//     `SELECT completed FROM session_logs WHERE user_id = ? ORDER BY end_time DESC LIMIT 1`,
+//     [userId],
+//     (err, session) => {
+//       if (err) {
+//         console.error("Error checking session:", err.message);
+//         return res.status(500).json({ error: "Server error checking session" });
+//       }
 
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
+//       const isCompleted = session ? session.completed === 1 : false;
 
-      if (
-        current_session !== undefined &&
-        current_session !== user.current_session
-      ) {
-        console.error(
-          `Session mismatch: Client reported ${current_session}, DB has ${user.current_session}`
-        );
-        return res.status(400).json({
-          error: "Session validation failed",
-          current_session: user.current_session,
-        });
-      }
+//       res.status(200).json({
+//         session_completed: isCompleted,
+//       });
+//     }
+//   );
+// });
 
-      let newSession = user.current_session;
-
-      // Only update if not already at session 5
-      if (newSession < 5) {
-        newSession += 1;
-
-        db.run(
-          "UPDATE users SET current_session = ? WHERE id = ?",
-          [newSession, userId],
-          (err) => {
-            if (err) {
-              console.error("Error updating session:", err.message);
-              return res
-                .status(500)
-                .json({ error: "Server error during session update" });
-            }
-
-            // Log session update
-            console.log(`User ${userId} advanced to session ${newSession}`);
-
-            res.status(200).json({
-              message: "Session updated successfully",
-              current_session: newSession,
-            });
-          }
-        );
-      } else {
-        res.status(200).json({
-          message: "Already at maximum session",
-          current_session: newSession,
-        });
-      }
-    }
-  );
-});
 
 // Get exercises for a session (requires auth)
-app.get(
-  "/api/exercises/group/:groupId/session/:sessionId",
-  authenticateToken,
-  (req, res) => {
-    const { groupId, sessionId } = req.params;
-
-    // Validate group and session
-    if (groupId < 1 || groupId > 4 || sessionId < 1 || sessionId > 5) {
-      return res.status(400).json({ error: "Invalid group or session" });
-    }
-
-    // Get exercises for the group and session
+app.get("/api/exercises_test",authenticateToken,(req, res) => {
+    // Get exercises_test
     db.all(
-      `SELECT e.* FROM exercises e
-     JOIN exercise_sessions es ON e.id = es.exercise_id
-     JOIN sessions s ON es.session_id = s.id
-     WHERE s.group_id = ? AND s.session_number = ?
-     ORDER BY es.order_in_session`,
-      [groupId, sessionId],
-      (err, exercises) => {
+      `SELECT e.* FROM exercises_test e`,
+      [],
+      (err, exercises_test) => {
         if (err) {
-          console.error("Error fetching exercises:", err.message);
+          console.error("Error fetching exercises_test:", err.message);
           return res
             .status(500)
-            .json({ error: "Server error fetching exercises" });
+            .json({ error: "Server error fetching exercises_test" });
         }
-
+        for (let i = exercises_test.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [exercises_test[i], exercises_test[j]] = [exercises_test[j], exercises_test[i]];
+        }
         // Log exercise fetch
         console.log(
-          `Fetched ${exercises.length} exercises for Group ${groupId}, Session ${sessionId}`
+          `Fetched ${exercises_test.length}`
         );
-
-        res.status(200).json(exercises);
+        console.log('exercises shuffled')
+        res.status(200).json(exercises_test);
       }
     );
   }
 );
 
-// Start a new session
-app.post("/api/sessions/start", authenticateToken, (req, res) => {
+// Start a test
+app.post("/api/exercises_test/start", authenticateToken, (req, res) => {
   const userId = req.user.id;
-  const sessionId = req.body.session_id;
 
-  db.get(
-    "SELECT current_session FROM users WHERE id = ?",
-    [userId],
-    (err, user) => {
-      if (err) {
-        console.error("Error finding user:", err.message);
-        return res.status(500).json({ error: "Server error finding user" });
-      }
+    db.get(
+      "SELECT id FROM session_logs WHERE user_id = ? AND completed = 0",
+      [userId],
+      (err, activeSession) => {
+        if (err) {
+          console.error("Error checking active session:", err.message);
+          return res
+            .status(500)
+            .json({ error: "Server error checking session" });
+        }
 
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
+        db.get(
+          "SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1",
+          [userId],
+          (err, lastSession) => {
+            if (err) {
+              console.error("Error checking last session:", err.message);
+              return res
+                .status(500)
+                .json({ error: "Server error checking last session" });
+            }
+            if (activeSession) {
+              return res.status(400).json({
+                error: "You already have an active session.",
+                session_log_id: activeSession.id,
+              });
+            }
+            db.run(
+              "INSERT INTO session_logs (user_id) VALUES (?)",
+              [userId],
+              function (err) {
+                if (err) {
+                  console.error("Error creating session log:", err.message);
+                  return res
+                    .status(500)
+                    .json({ error: "Server error creating session log" });
+                }
 
-      // Check if user has completed all sessions (current_session = 6)
-      if (user.current_session >= 6) {
-        return res.status(400).json({
-          error: "All sessions completed. No more sessions available.",
-          all_sessions_completed: true,
-        });
-      }
-
-      if (sessionId !== user.current_session) {
-        console.error(
-          `Session mismatch: Client requested ${sessionId}, DB has ${user.current_session}`
-        );
-        return res.status(400).json({
-          error: "Invalid session ID",
-          current_session: user.current_session,
-        });
-      }
-
-      if (user.current_session > 5) {
-        return res.status(400).json({
-          error: "Maximum number of sessions already completed",
-        });
-      }
-
-      db.get(
-        "SELECT * FROM session_logs WHERE user_id = ? AND completed = 0",
-        [userId],
-        (err, activeSession) => {
-          if (err) {
-            console.error("Error checking active session:", err.message);
-            return res
-              .status(500)
-              .json({ error: "Server error checking session" });
-          }
-
-          if (activeSession) {
-            return res.status(200).json({
-              message: "Session already in progress",
-              session_log_id: activeSession.id,
-              session_id: activeSession.session_id,
-            });
-          }
-
-          db.get(
-            "SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1",
-            [userId],
-            (err, lastSession) => {
-              if (err) {
-                console.error("Error checking last session:", err.message);
-                return res
-                  .status(500)
-                  .json({ error: "Server error checking last session" });
-              }
-
-              const twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
-              const now = new Date();
-
-              if (lastSession && lastSession.end_time) {
-                const lastSessionEndTime = new Date(lastSession.end_time);
-                const nextAvailableTime = new Date(
-                  lastSessionEndTime.getTime() + twentyFourHoursInMillis
+                const sessionLogId = this.lastID;
+                console.log(
+                  `User ${userId} started test`
                 );
 
-                if (now < nextAvailableTime) {
-                  const timeLeft = nextAvailableTime - now;
-                  const hoursLeft = Math.ceil(timeLeft / (1000 * 60 * 60));
-
-                  return res.status(403).json({
-                    error: "Session not available yet. Please wait 24 hours.",
-                    next_available_at: nextAvailableTime.toISOString(),
-                    hours_left: hoursLeft,
-                  });
-                }
+                res.status(201).json({
+                  message: "Test started successfully",
+                  session_log_id: sessionLogId,
+                });
               }
-
-              db.run(
-                "INSERT INTO session_logs (user_id, session_id) VALUES (?, ?)",
-                [userId, sessionId],
-                function (err) {
-                  if (err) {
-                    console.error("Error creating session log:", err.message);
-                    return res
-                      .status(500)
-                      .json({ error: "Server error creating session log" });
-                  }
-
-                  const sessionLogId = this.lastID;
-                  console.log(
-                    `User ${userId} started session ${sessionId}, log ID: ${sessionLogId}`
-                  );
-
-                  res.status(201).json({
-                    message: "Session started successfully",
-                    session_log_id: sessionLogId,
-                    session_id: sessionId,
-                  });
-                }
-              );
-            }
-          );
-        }
-      );
-    }
-  );
-});
+            );
+          }
+        );
+      }
+    );
+  }
+);
 
 // Complete a session
 app.post(
-  "/api/sessions/:sessionLogId/complete",
+  "/api/sessions_Logs/complete",
   authenticateToken,
   (req, res) => {
     const { sessionLogId } = req.params;
@@ -594,7 +473,7 @@ app.post(
 
     // Verify the session belongs to the user
     db.get(
-      "SELECT sl.*, u.current_session FROM session_logs sl JOIN users u ON sl.user_id = u.id WHERE sl.id = ? AND sl.user_id = ?",
+      "SELECT sl.*, u.* FROM session_logs sl JOIN users u ON sl.user_id = u.id WHERE sl.id = ? AND sl.user_id = ?",
       [sessionLogId, userId],
       (err, sessionLog) => {
         if (err) {
@@ -617,10 +496,7 @@ app.post(
         // Calculate next available time (24 hours from now)
         const now = new Date();
         const nextAvailable = new Date(now);
-        nextAvailable.setHours(nextAvailable.getHours() + 24);
-
-        // Check if this is the 5th session being completed
-        const isFinishingFinalSession = sessionLog.session_id === 5;
+        nextAvailable.setHours(nextAvailable.getHours());
 
         // Update session log
         db.run(
@@ -648,34 +524,12 @@ app.post(
             }
 
             console.log(
-              `User ${userId} completed session ${sessionLog.session_id}, log ID: ${sessionLogId}`
+              `User ${userId}, log ID: ${sessionLogId}`
             );
-
-            // If completing session 5, update user's current_session to 6 to indicate all sessions are completed
-            if (isFinishingFinalSession) {
-              db.run(
-                "UPDATE users SET current_session = 6 WHERE id = ?",
-                [userId],
-                (err) => {
-                  if (err) {
-                    console.error(
-                      "Error updating user session status:",
-                      err.message
-                    );
-                    // Continue with the response even if this fails
-                  } else {
-                    console.log(
-                      `User ${userId} has completed all sessions, updated to session 6 (completed state)`
-                    );
-                  }
-                }
-              );
-            }
 
             res.status(200).json({
               message: "Session completed successfully",
               next_available_at: nextAvailable.toISOString(),
-              all_sessions_completed: isFinishingFinalSession,
             });
           }
         );
@@ -689,20 +543,20 @@ app.post("/api/puzzles/results", authenticateToken, (req, res) => {
   const userId = req.user.id;
   const {
     exercise_id,
-    session_id,
     is_solved,
     attempts,
     correct_moves,
     incorrect_moves,
     time_spent_seconds,
     move_times,
+    selected_motive,
   } = req.body;
 
   // Check if this user has already completed this puzzle in the session
   db.get(
     `SELECT 1 FROM puzzle_results
-     WHERE user_id = ? AND exercise_id = ? AND session_id = ?`,
-    [userId, exercise_id, session_id],
+     WHERE user_id = ? AND exercise_id = ?`,
+    [userId, exercise_id],
     (err, existing) => {
       if (err) {
         console.error(
@@ -720,16 +574,27 @@ app.post("/api/puzzles/results", authenticateToken, (req, res) => {
           already_solved: true,
         });
       } else {
+        db.get(
+        `SELECT motives FROM exercises_test where id = ?`,
+        [exercise_id],
+        (err, exercise) => {
+          if(err){
+          console.error("Error fetching motive for exercise ", err.message);
+          return res
+            .status(500)
+            .json({error: "Server error fetching exercise motive"});
+        }
+        const exerciseMotive = exercise.motives;
         // Insert puzzle result
         db.run(
           `INSERT INTO puzzle_results
-         (user_id, exercise_id, session_id, is_solved, attempts, correct_moves, incorrect_moves, time_spent_seconds)
+         (user_id, exercise_id, is_solved, selected_motive, attempts, correct_moves, incorrect_moves, time_spent_seconds)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             userId,
             exercise_id,
-            session_id,
             is_solved ? 1 : 0,
+            selected_motive || null,
             attempts,
             correct_moves,
             incorrect_moves,
@@ -745,7 +610,7 @@ app.post("/api/puzzles/results", authenticateToken, (req, res) => {
 
             const resultId = this.lastID;
             console.log(
-              `Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}`
+              `Puzzle result recorded for user ${userId}, exercise ${exercise_id}, solved: ${is_solved}, motive: ${exerciseMotive}, selected motive: ${selected_motive}`
             );
 
             // Save move times if provided
@@ -780,8 +645,8 @@ app.post("/api/puzzles/results", authenticateToken, (req, res) => {
               `UPDATE session_logs
              SET puzzles_completed = puzzles_completed + 1,
                  puzzles_solved = puzzles_solved + ${is_solved ? 1 : 0}
-             WHERE user_id = ? AND session_id = ? AND completed = 0`,
-              [userId, session_id],
+             WHERE user_id = ? AND completed = 0`,
+              [userId],
               (err) => {
                 if (err) {
                   console.error(
@@ -799,8 +664,11 @@ app.post("/api/puzzles/results", authenticateToken, (req, res) => {
               already_solved: false,
             });
           }
-        );
+        ); 
       }
+    );
+  }
+
     }
   );
 });
@@ -811,12 +679,12 @@ app.get("/api/users/puzzle-history", authenticateToken, (req, res) => {
 
   db.all(
     `SELECT
-       pr.id, pr.exercise_id, pr.session_id,
+       pr.id, pr.exercise_id,
        pr.is_solved, pr.attempts, pr.correct_moves,
        pr.incorrect_moves, pr.time_spent_seconds,
        pr.completed_at, e.motives, e.starting_color
      FROM puzzle_results pr
-     JOIN exercises e ON pr.exercise_id = e.id
+     JOIN exercises_test e ON pr.exercise_id = e.id
      WHERE pr.user_id = ?
      ORDER BY pr.completed_at DESC`,
     [userId],
@@ -839,7 +707,7 @@ app.get("/api/users/session-history", authenticateToken, (req, res) => {
 
   db.all(
     `SELECT
-       id, session_id, start_time, end_time,
+       id, start_time, end_time,
        total_time_seconds, puzzles_completed,
        puzzles_solved, next_available_at
      FROM session_logs

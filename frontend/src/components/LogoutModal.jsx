@@ -5,8 +5,6 @@ const LogoutModal = ({ isOpen, onConfirm, onCancel, sessionInfo}) => {
   if (!isOpen) return null;
 
   const {
-    currentSession = 1,
-    maxSessions = 5,
     puzzlesCompleted = 0,
     totalPuzzles = 0
   } = sessionInfo || {};
@@ -18,7 +16,7 @@ const LogoutModal = ({ isOpen, onConfirm, onCancel, sessionInfo}) => {
         <h2>Confirm Logout</h2>
         <div className={styles.modalContent}>
           <p>
-            <strong>Warning:</strong> If you logout now, you cannot return to this session.
+            <strong>Warning:</strong> If you logout now, you cannot return to this test.
           </p>
           <p>Any unsaved progress will be lost.</p>
           <p className={styles.confirmQuestion}>Are you sure you want to logout?</p>

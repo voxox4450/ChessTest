@@ -10,7 +10,7 @@ const LogoFooter = () => {
             <img src="/uj.png" alt="Uniwersytet Jagielloński" className={styles.logo} />
           </div>
         </a>
-        <a href="https://bratniak.uj.edu.pl" target="_blank" rel="noopener noreferrer">
+        <a href="https://bratniak.krakow.pl/" target="_blank" rel="noopener noreferrer">
           <div className={styles.logoWrapper}>
             <img src="/bratniak.png" alt="Bratniak UJ" className={styles.logo} />
           </div>

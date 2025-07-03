@@ -4,8 +4,8 @@
 # Set variables
 RESOURCE_GROUP="PodstawowySzachy"
 APP_SERVICE_PLAN="ASP-PodstawowySzachy-96f5"
-FRONTEND_APP="chessBSFrontend"
-BACKEND_URL="https://chessbsbackend.azurewebsites.net/"
+FRONTEND_APP="chessHKFrontend"
+BACKEND_URL="https://chesshkbackend.azurewebsites.net/"
 LOCATION="Poland Central "
 
 # Step 1: Check if the app exists, create only if not
@@ -49,7 +49,7 @@ else
   # Create package.json with all necessary dependencies
   cat > package.json << 'EOF'
 {
-  "name": "chessBSfrontend",
+  "name": "chessKHfrontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

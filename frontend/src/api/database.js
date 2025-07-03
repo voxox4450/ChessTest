@@ -55,31 +55,13 @@ export const loginUserFromDb = async (username, password) => {
 };
 
 export const updateUserSession = async (userId) => {
-  try {
-    const currentSession = Number(localStorage.getItem('current_session'));
-    
-    const response = await axios.post(
-      `${API_URL}/users/${userId}/next-session`,
-      { current_session: currentSession },
-      getAuthConfig()
-    );
-
-    return response.data.current_session;
-  } catch (error) {
-    console.error('Error updating session:', error);
-    if (error.response && error.response.data && error.response.data.current_session) {
-      localStorage.setItem('current_session', error.response.data.current_session);
-      return error.response.data.current_session;
-    }
-    throw error;
-  }
 };
 
 
-export const getExercisesForSession = async (groupId, sessionId) => {
+export const getExercisesForSession = async () => {
   try {
     const response = await axios.get(
-      `${API_URL}/exercises/group/${groupId}/session/${sessionId}`,
+      `${API_URL}/exercises_test`,
       getAuthConfig()
     );
 
@@ -91,11 +73,10 @@ export const getExercisesForSession = async (groupId, sessionId) => {
 };
 
 // Session and puzzle results functions
-export const createSessionLog = async (userId, sessionId) => {
+export const createSessionLog = async (userId) => {
   try {
     const response = await axios.post(
-      `${API_URL}/sessions/start`,
-      { session_id: sessionId },
+      `${API_URL}/sessions_Log`,
       getAuthConfig()
     );
 
@@ -127,26 +108,26 @@ export const completeSessionLog = async (sessionLogId, totalTimeSeconds, puzzles
 
 export const recordPuzzleResult = async (
   exerciseId,
-  sessionId,
   isSolved,
   attempts,
   correctMoves,
   incorrectMoves,
   timeSpentSeconds,
-  moveTimes = []
+  moveTimes = [],
+  selectedMotive = null
 ) => {
   try {
     const response = await axios.post(
       `${API_URL}/puzzles/results`,
       {
         exercise_id: exerciseId,
-        session_id: sessionId,
         is_solved: isSolved,
         attempts,
         correct_moves: correctMoves,
         incorrect_moves: incorrectMoves,
         time_spent_seconds: timeSpentSeconds,
-        move_times: moveTimes
+        move_times: moveTimes,
+        selected_motive: selectedMotive
       },
       getAuthConfig()
     );
@@ -200,8 +181,8 @@ export const getSessionHistory = async () => {
   }
 };
 
-export async function checkIfPuzzleSolved(userId, exerciseId, sessionId) {
-  const response = await fetch(`/api/check-puzzle-result?userId=${userId}&exerciseId=${exerciseId}&sessionId=${sessionId}`);
+export async function checkIfPuzzleSolved(userId, exerciseId) {
+  const response = await fetch(`/api/check-puzzle-result?userId=${userId}&exerciseId=${exerciseId}`);
   if (!response.ok) {
     console.error('Failed to check puzzle result');
     return false;
@@ -209,3 +190,4 @@ export async function checkIfPuzzleSolved(userId, exerciseId, sessionId) {
   const result = await response.json();
   return result.already_solved;
 }
+ 

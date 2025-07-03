@@ -5,6 +5,8 @@ const PuzzleStatus = ({
   handleNextPuzzle,
   isSolved,
   isFailed,
+  selectedMotive,
+  setSelectedMotive,
   showSolution,
   solutionTimer,
   currentPuzzle
@@ -12,9 +14,8 @@ const PuzzleStatus = ({
   const [showModalWrapper, setShowModalWrapper] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [showInitialMessage, setShowInitialMessage] = useState(true);
-
+  const motives = ["Fork", "Pin", "Undermining", "New motive"];
   useEffect(() => {
-    let initialTimeoutId;
 
     // Reset states when puzzle status changes
     if (!isSolved && !isFailed) {
@@ -24,104 +25,61 @@ const PuzzleStatus = ({
       return;
     }
 
-    // Handle failed puzzles - show modal, then hide, then show button
-    if (isFailed || isSolved) {
-      // Show modal immediately for 4 seconds
-      setShowModalWrapper(true);
-      setShowInitialMessage(true);
-      
-      initialTimeoutId = setTimeout(() => {
-        // Hide modal after 4 seconds
-        setShowModalWrapper(false);
-      }, 4000);
-    }
     
     // Handle solved puzzles - only show button without initial modal hide/show
-   /* if (isSolved) {
+   if (isSolved) {
       setShowModalWrapper(true);
       setShowButton(true);
       setShowInitialMessage(true);
-    } */
 
-    return () => {
-      clearTimeout(initialTimeoutId);
-    };
+    } 
+
   }, [isSolved, isFailed]);
 
   // Handle showing button when solution timer is near completion
   useEffect(() => {
     // For failed puzzles, when the solution timer is done,
     // show the button-only modal
-    if ((isFailed || isSolved) && solutionTimer === 0 && !showButton) {
+    if ((isFailed || isSolved) && !showButton) {
       setShowButton(true);
       setShowModalWrapper(true);
       setShowInitialMessage(false); // Don't show text in the second modal appearance
     }
-  }, [solutionTimer, isFailed, showButton]);
+  }, [isFailed, showButton]);
+
+
+    const MotiveSelector = () => (
+    <div className={styles.motiveSelector}>
+      <p>Select the motive:</p>
+      <div className={styles.motiveButtons}>
+        {motives.map(motive => (
+          <button
+            key={motive}
+            className={`${styles.motiveButton} ${selectedMotive === motive ? styles.selected : ''}`}
+            onClick={() => {
+              setSelectedMotive(motive);
+            }}
+          >
+            {motive}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   const statusMessage = (
-    <>
-      {isSolved && (
-        <div className={`${styles.statusMessage} ${styles.success}`}>
-          {showSolution && showInitialMessage ? (
-            <>
-              {`Correct!`}
-              {showButton && (
-                <button
-                  className={styles.nextPuzzleButton}
-                  onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0}
-                >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              {showInitialMessage ? "Correct! Loading next puzzle..." : ""}
-              {showButton && (
-                <button
-                  className={styles.nextPuzzleButton}
-                  onClick={handleNextPuzzle}
-                >
-                  Next puzzle
-                </button>
-              )}
-            </>
-          )}
-        </div>
+    <div className={styles.statusMessage}>
+      {(isSolved || isFailed) && selectedMotive=== null && <MotiveSelector />}
+
+      {(isSolved || isFailed) && selectedMotive != null  && showButton && (
+        <button
+          className={styles.nextPuzzleButton}
+          onClick={handleNextPuzzle()}
+        >
+          Next Puzzle
+        </button>
       )}
-      {isFailed && (
-        <div className={`${styles.statusMessage} ${styles.failure}`}>
-          {showSolution && showInitialMessage ? (
-            <>
-              {`Incorrect. Review the solution `}
-              {showButton && (
-                <button
-                  className={styles.nextPuzzleButton}
-                  onClick={handleNextPuzzle}
-                  disabled={solutionTimer > 0}
-                >
-                  {solutionTimer > 0 ? `Next puzzle in ${solutionTimer}s` : 'Next puzzle'}
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              {showInitialMessage ? "Incorrect. The correct solution will be shown." : ""}
-              {showButton && !showInitialMessage && (
-                <button
-                  className={styles.nextPuzzleButton}
-                  onClick={handleNextPuzzle}
-                >
-                  Next puzzle
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </>
+    </div>
   );
 
   return (

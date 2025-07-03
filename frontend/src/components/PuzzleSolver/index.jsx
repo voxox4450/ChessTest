@@ -22,9 +22,8 @@ import {
 import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const SOLUTION_DISPLAY_TIME = 64; // 64 seconds to view solution
 
-function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionId, sessionLogId, initialPuzzleIndex = 0 }) {
+function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionLogId, initialPuzzleIndex = 0 }) {
   // State declarations
   const [game, setGame] = useState(new Chess(initialFen));
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
@@ -33,14 +32,13 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   const [isSolved, setIsSolved] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
   const [moveIndex, setMoveIndex] = useState(0);
-  const [showSolution, setShowSolution] = useState(false);
+  const [selectedMotive, setSelectedMotive] = useState(null);
   const [replayIndex, setReplayIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
   const [animateError, setAnimateError] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [solutionTimer, setSolutionTimer] = useState(0);
-  const [showSolutionAfterSuccess, setShowSolutionAfterSuccess] = useState(false);
-
+  const [nextClicked, setNextCliced] = useState(false);
+  
   // New state for tracking metrics
   const [startTime, setStartTime] = useState(null);
   const [totalCorrectMoves, setTotalCorrectMoves] = useState(0);
@@ -99,12 +97,10 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     setIsSolved(false);
     setIsFailed(false);
     setMoveIndex(0);
-    setShowSolution(false);
     setReplayIndex(0);
     setErrorMessage('');
     setAnimateError(false);
-    setSolutionTimer(0);
-    setShowSolutionAfterSuccess(false);
+    setSelectedMotive(null);
 
     // Reset metrics for new puzzle
     const now = Date.now();
@@ -120,7 +116,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       startTime: now,
       isSolved: false,
       isFailed: false,
-      moveIndex: 0
+      moveIndex: 0,
+      selectedMotive: null
     }));
 
     // Clear any previous puzzle FEN and moves data
@@ -146,7 +143,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   const handleNextPuzzle = () => {
     console.log("handling the next puzzle");
-    setSolutionTimer(0);
+    setNextCliced(true);
+    setSelectedMotive(null);
+
     if (currentPuzzle?.id) {
       localStorage.removeItem(`solution_end_${currentPuzzle.id}`);
     }    
@@ -169,7 +168,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   // Handle user moves
   const handleMove = (sourceSquare, targetSquare) => {
-    if (isSolved || showSolution || !currentPuzzle) return false;
+    if (isSolved /*|| showSolution*/ || !currentPuzzle) return false;
 
     // Clear any previous error
     setErrorMessage('');
@@ -283,16 +282,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                     setAttemptedExercises(prev => prev + 1);
                   }
 
-                  // Automatically show solution after success
-                  setShowSolutionAfterSuccess(true);
-                  setShowSolution(true);
                   setReplayIndex(0);
-                  // Start a timer to show the solution for 5 seconds before moving to next puzzle
-                  const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
-                  localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
-                  setSolutionTimer(SOLUTION_DISPLAY_TIME);
-
-
                   // Update progress with new completion count
                   updateProgress(currentIndex);
                 }
@@ -314,15 +304,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           }
 
           setMoveIndex(newMoveIndex);
-          // Automatically show solution after success
-          setShowSolutionAfterSuccess(true);
-          setShowSolution(true);
-          setReplayIndex(0);
-          // Start a timer to show the solution for 5 seconds before moving to next puzzle //correct solution
-          const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
-          localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
 
-          setSolutionTimer(SOLUTION_DISPLAY_TIME);
+          setReplayIndex(0);
 
           // Update progress with new completion count
           updateProgress(currentIndex);
@@ -332,8 +315,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         setTotalIncorrectMoves(prev => prev + 1);
         triggerErrorAnimation();
         setIsFailed(true);
-        localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'failed');
-
 
         // Store failed state in localStorage
         localStorage.setItem('current_puzzle_data', JSON.stringify({
@@ -353,14 +334,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         // Reset the game to the previous state
         game.undo();
         setGame(new Chess(game.fen()));
-
-        // Automatically show solution after incorrect move
-        handleShowSolution();
-
-        // Start solution timer (30 seconds)
-        const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
-        localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
-        setSolutionTimer(SOLUTION_DISPLAY_TIME);
 
         // Record the elapsed time when puzzle is failed
         const timeSpent = Math.floor((Date.now() - puzzleStartTime) / 1000);
@@ -388,23 +361,16 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   // Function to handle timeup (time runs out)
   const handleTimeUp = () => {
-    if (isSolved || showSolution) return;
+    if (isSolved) return;
 
     console.log('Time up for puzzle, showing solution...');
     setIsFailed(true);
-    localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'failed');
-
+    submitPuzzleResult(false)
 
     // Record the elapsed time
     const timeSpent = Math.floor((Date.now() - puzzleStartTime) / 1000);
     setElapsedPuzzleTime(timeSpent);
 
-    // Automatically show solution
-    setShowSolution(true);
-    setReplayIndex(0);
-    const endTime = Date.now() + SOLUTION_DISPLAY_TIME * 1000;
-    localStorage.setItem(`solution_end_${currentPuzzle?.id}`, endTime.toString());
-    setSolutionTimer(SOLUTION_DISPLAY_TIME);
     // Count as attempted if not already
     if (!isFailed && !isSolved) {
       setAttemptedExercises(prev => prev + 1);
@@ -418,7 +384,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       isSolved: false,
       isFailed: true,
       failReason: 'timeout',
-      moveIndex: moveIndex
+      moveIndex: moveIndex,
+      selectedMotive: selectedMotive
     }));
 
     // Submit puzzle result to backend
@@ -426,36 +393,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
     // Update progress
     updateProgress(currentIndex);
-  };
-
-  // Handler for showing solution
-  const handleShowSolution = () => {
-    if (!currentPuzzle) return;
-
-    setShowSolution(true);
-    setReplayIndex(0); // Start from beginning
-
-    // Reset the game state to the initial position
-    try {
-      const initialPosition = new Chess(currentPuzzle.initial_fen);
-      setGame(initialPosition);
-    } catch (error) {
-      console.error("Error resetting to initial position:", error);
-    }
-  };
-
-  // Handler for previous move in solution replay
-  const handlePrevMove = () => {
-    if (replayIndex > 0) {
-      setReplayIndex(replayIndex - 1);
-    }
-  };
-
-  // Handler for next move in solution replay
-  const handleNextMove = () => {
-    if (currentPuzzle && replayIndex < currentPuzzle.moves.length) {
-      setReplayIndex(replayIndex + 1);
-    }
   };
 
   // Error animation trigger
@@ -466,10 +403,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   // Function to submit puzzle result to backend
   const submitPuzzleResult = async (isSolved) => {
-    if (!currentPuzzle || !userId || !sessionId) return;
+    if (!currentPuzzle || !userId || selectedMotive == null) return;
 
     const timeSpent = elapsedPuzzleTime || Math.floor((Date.now() - puzzleStartTime) / 1000);
-
     const correctMoves = movesHistory.filter(move => move.isCorrect).length;
     const incorrectMoves = movesHistory.filter(move => !move.isCorrect).length;
     const attempts = correctMoves + incorrectMoves;
@@ -484,13 +420,13 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     try {
       await recordPuzzleResult(
         currentPuzzle.id,
-        sessionId,
         isSolved,
         attempts,
         correctMoves,
         incorrectMoves,
         timeSpent,
-        moveTimes
+        moveTimes,
+        selectedMotive
       );
       console.log('Puzzle result submitted successfully');
     } catch (error) {
@@ -540,60 +476,42 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     }
   }, [completedExercises, exercises.length, onComplete]);
 
-  // Solution timer countdown
-  useEffect(() => {
-    if (solutionTimer <= 0) return;
+  // // Solution timer countdown
+  // useEffect(() => {
+  //   if (solutionTimer <= 0) return;
 
-    const timer = setTimeout(() => {
-      setSolutionTimer(prev => {
-        if (prev <= 1) {
-          // When timer reaches 0, move to next puzzle
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  //   const timer = setTimeout(() => {
+  //     setSolutionTimer(prev => {
+  //       if (prev <= 1) {
+  //         // When timer reaches 0, move to next puzzle
+  //         return 0;
+  //       }
+  //       return prev - 1;
+  //     });
+  //   }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [solutionTimer]);
+  //   return () => clearTimeout(timer);
+  // }, [solutionTimer]);
 
   // Auto-load next puzzle when solved
   useEffect(() => {
-    if (isSolved && !showSolutionAfterSuccess) {
+    if (isSolved && !nextClicked && selectedMotive != null) {
       const timer = setTimeout(() => {
         handleNextPuzzle();
-      }, 2000);
+      });
       return () => clearTimeout(timer);
     }
-  }, [isSolved, showSolutionAfterSuccess]);
-
-  // Apply moves during solution replay
-  useEffect(() => {
-    if (!currentPuzzle || !showSolution || replayIndex < 0) return;
-
-    try {
-      // Create a new chess instance with the initial position
-      const replayChess = createReplayPosition(currentPuzzle, currentPuzzle.moves, replayIndex);
-
-      if (replayChess) {
-        setGame(replayChess);
-      }
-    } catch (error) {
-      console.error("Error during solution replay:", error);
-    }
-  }, [replayIndex, currentPuzzle, showSolution]);
+  }, [isSolved, nextClicked,selectedMotive]);
 
   // Update when a puzzle is solved to submit the result
   useEffect(() => {
-    if (isSolved && currentPuzzle) {
-      // Record the elapsed time when puzzle is solved
+    if ((isFailed || isSolved) && currentPuzzle && selectedMotive!= null) {
       const timeSpent = Math.floor((Date.now() - puzzleStartTime) / 1000);
       setElapsedPuzzleTime(timeSpent);
-
-      // Submit puzzle result to backend
-      submitPuzzleResult(true);
+      submitPuzzleResult(isSolved);
     }
-  }, [isSolved, currentPuzzle]);
+  }, [selectedMotive]);
+
 
   // Submit session results when all exercises are completed
   useEffect(() => {
@@ -672,27 +590,27 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           }
 
           // Then restore the additional state
-          const persistedStatus = localStorage.getItem(`puzzle-status-${puzzleData.puzzleId}`);
-          const solutionEnd = localStorage.getItem(`solution_end_${puzzleData.puzzleId}`);
-          let remaining = SOLUTION_DISPLAY_TIME;
+          //const persistedStatus = localStorage.getItem(`puzzle-status-${puzzleData.puzzleId}`);
+          //const solutionEnd = localStorage.getItem(`solution_end_${puzzleData.puzzleId}`);
+          //let remaining = SOLUTION_DISPLAY_TIME;
 
-          if (solutionEnd) {
-            const timeLeft = Math.ceil((parseInt(solutionEnd, 10) - Date.now()) / 1000);
-            remaining = Math.max(4, timeLeft);
-          }
+          // if (solutionEnd) {
+          //   const timeLeft = Math.ceil((parseInt(solutionEnd, 10) - Date.now()) / 1000);
+          //   remaining = Math.max(4, timeLeft);
+          // }
 
           if (persistedStatus === 'solved') {
             setIsSolved(true);
-            setShowSolutionAfterSuccess(true);
-            setShowSolution(true);
+            //setShowSolutionAfterSuccess(true);
+            //setShowSolution(true);
             setReplayIndex(0);
-            setSolutionTimer(remaining);
+            //setSolutionTimer(remaining);
           }
           if (persistedStatus === 'failed') {
             setIsFailed(true);
-            setShowSolution(true);
+            //setShowSolution(true);
             setReplayIndex(0);
-            setSolutionTimer(remaining);
+            //setSolutionTimer(remaining);
           }
 
 
@@ -784,89 +702,92 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     );
   }
 
-  return (
-    <div className={styles.PuzzleSolver}>
-      <PuzzleHeader currentPuzzle={currentPuzzle} isSolved={isSolved} isFailed={isFailed} />
-      <div className={styles.boardContainer}>
-        <PuzzleBoard
-          game={game}
-          orientation={currentPuzzle?.starting_color || 'white'}
-          onMove={handleMove}
-        />
+return (
+  <div className={styles.PuzzleSolver}>
+    <PuzzleHeader currentPuzzle={currentPuzzle} isSolved={isSolved} isFailed={isFailed} />
+    <div className={styles.boardContainer}>
+      <PuzzleBoard
+        game={game}
+        orientation={currentPuzzle?.starting_color || 'white'}
+        onMove={handleMove}
+      />
 
-        <div className={styles.sidePanel}>
-          {showSolution ? (
-            <div className={styles.solutionTimer}>
-              <strong>Next puzzle in: </strong>
-              <span>{solutionTimer}s</span>
-            </div>
-          ) : (
-            <Timer
-              key={currentPuzzle?.id || currentIndex}
-              initialTime={120}
-              onTimeUp={handleTimeUp}
-              isRunning={!isSolved && !isFailed}
-              puzzleId={currentPuzzle?.id || `puzzle_${currentIndex}`}
-            />
-          )}
-
-          <div className={styles.puzzleDetails}>
-            <div className={styles.startingColor}>
-              <strong>Starting color</strong>
-              <span className={styles.colorText}>{currentPuzzle?.starting_color === 'black' ? 'Black' : 'White'}</span>
-              <div className={styles.colorIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                  <path d="M2 12h20"></path>
-                </svg>
-              </div>
-            </div>
-            <PuzzleControls
-              isSolved={isSolved}
-              isFailed={isFailed}
-              showSolution={showSolution}
-              onPrevMove={handlePrevMove}
-              onNextMove={handleNextMove}
-              currentMoveIndex={replayIndex}
-              totalMoves={currentPuzzle?.moves?.length || 0}
-            />
+      <div className={styles.sidePanel}>
+        {/* {showSolution ? (
+          <div className={styles.solutionTimer}>
+            <strong>Next puzzle in: </strong>
+            <span>{solutionTimer}s</span>
           </div>
-          {errorMessage && (
-            <div>
-              <div
-                className={`${styles.errorMessage} ${animateError ? styles.shake : ''}`}
+        ) : ( */}
+          <Timer
+            key={currentPuzzle?.id || currentIndex}
+            initialTime={120}
+            onTimeUp={handleTimeUp}
+            isRunning={!isSolved && !isFailed}
+            puzzleId={currentPuzzle?.id || `puzzle_${currentIndex}`}
+          />
+        {/* )} */}
+
+        <div className={styles.puzzleDetails}>
+          <div className={styles.startingColor}>
+            <strong>Starting color</strong>
+            <span className={styles.colorText}>
+              {currentPuzzle?.starting_color === 'black' ? 'Black' : 'White'}
+            </span>
+            <div className={styles.colorIcon}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {errorMessage}
-              </div>
-            </div>
-          )}
-          <div className={styles.header}>
-            <div className={styles.puzzleInfo}>
-              <h2>
-                Puzzle {currentIndex + 1} of {exercises.length}
-              </h2>
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M2 12h20"></path>
+              </svg>
             </div>
           </div>
         </div>
+
+        {errorMessage && (
+          <div>
+            <div className={`${styles.errorMessage} ${animateError ? styles.shake : ''}`}>
+              {errorMessage}
+            </div>
+          </div>
+        )}
+
+        <div className={styles.header}>
+          <div className={styles.puzzleInfo}>
+            <h2>
+              Puzzle {currentIndex + 1} of {exercises.length}
+            </h2>
+          </div>
+        </div>
       </div>
-
-      <PuzzleStatus
-        handleNextPuzzle={handleNextPuzzle}
-        animateError={animateError}
-        isSolved={isSolved}
-        isFailed={isFailed}
-        showSolution={showSolution}
-        solutionTimer={solutionTimer}
-        currentPuzzle={currentPuzzle}
-      />
-
-      <PuzzleProgress
-        totalExercises={exercises.length}
-        attemptedExercises={currentIndex + 1}
-      />
     </div>
-  );
+
+    <PuzzleStatus
+      handleNextPuzzle={handleNextPuzzle}
+      animateError={animateError}
+      isSolved={isSolved}
+      isFailed={isFailed}
+      currentPuzzle={currentPuzzle}
+      selectedMotive = {selectedMotive}
+      setSelectedMotive = {setSelectedMotive}
+    />
+
+    <PuzzleProgress
+      totalExercises={exercises.length}
+      attemptedExercises={currentIndex + 1}
+    />
+  </div>
+);
 }
 
 export default PuzzleSolver;

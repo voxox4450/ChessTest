@@ -1052,21 +1052,10 @@ button:focus {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-right: 2.5rem;
+  /* padding-right: 2.5rem; */
   font-size: 2rem;
 }
 
-
-/* Optionally style success/failure */
-.statusMessage.success {
-  color: green;
-  font-weight: bold;
-}
-
-.statusMessage.failure {
-  color: red;
-  font-weight: bold;
-}
 
 .timer {
   color: var(--text-primary);
@@ -1074,21 +1063,10 @@ button:focus {
   font-size: 1.5rem;
 }
 
-.correctFeedback{
-  color:black;
-  padding: 0.2em;
-  margin: 0.2em;
-  border-radius: var(--radius-md);
-  background-color: #00FF33;
-  border: 1px solid #00FF33;
-  animation: fadeIn 0.5s ease;
-}
-.incorrectFeedback{
-  color: black;
-  padding: 0.2em;
-  margin: 0.2em;
-  border-radius: var(--radius-md);
-  background-color: rgb(255, 18, 18);
-  border: 1px solid rgba(229, 62, 62);
-  animation: fadeIn 0.5s ease;
+.motiveButtons{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3,auto);
+  gap: 1rem 1rem;
+  justify-items: auto;
 }

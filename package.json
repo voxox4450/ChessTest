@@ -13,6 +13,7 @@
   "dependencies": {
     "@react-chess-tools/react-chess-game": "^0.4.0",
     "@react-chess-tools/react-chess-puzzle": "^0.4.0",
+    "axios": "^1.10.0",
     "chess-puzzle-app": "file:",
     "chess.js": "^1.0.0-beta.8",
     "concurrently": "^8.2.2",
