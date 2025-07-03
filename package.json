@@ -1,15 +1,22 @@
 {
-  "name": "chessBSfrontend",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "chessBSfrontend": "file:",
-    "express": "^4.18.2"
-  },
+  "name": "chess-puzzle-app",
+  "version": "1.0.0",
+  "description": "Chess puzzle training application",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node backend/server.js",
+    "frontend": "cd frontend && npm start",
+    "backend": "cd backend && node server.js",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install"
   },
-  "engines": {
-    "node": "18.x"
+  "dependencies": {
+    "@react-chess-tools/react-chess-game": "^0.4.0",
+    "@react-chess-tools/react-chess-puzzle": "^0.4.0",
+    "chess-puzzle-app": "file:",
+    "chess.js": "^1.0.0-beta.8",
+    "concurrently": "^8.2.2",
+    "lodash": "^4.17.21",
+    "react-chessboard": "^4.7.2"
   }
 }

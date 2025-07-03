@@ -35,7 +35,7 @@ az webapp config appsettings set \
 
 # Step 3: Prepare deployment package
 echo "Preparing deployment package..."
-cd D:/ChessProject/frontend
+cd D:/chess/ChessProject/frontend
 
 # Make sure we're using the production versions of config files
 echo "Setting production configuration..."

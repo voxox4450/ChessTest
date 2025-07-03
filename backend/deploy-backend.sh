@@ -4,8 +4,8 @@
 # Set variables
 RESOURCE_GROUP="PodstawowySzachy"
 APP_SERVICE_PLAN="ASP-PodstawowySzachy-96f5"
-BACKEND_APP="chessBSBackend"
-FRONTEND_URL="https://chessbsfrontend.azurewebsites.net"
+BACKEND_APP="chessHKbackend"
+FRONTEND_URL="https://chesshkfrontend.azurewebsites.net"
 
 # Step 1: Create or update the backend app service
 echo "Creating/updating backend app service..."
@@ -29,7 +29,7 @@ az webapp config appsettings set \
 
 # Step 3: Prepare deployment package
 echo "Preparing deployment package..."
-cd D:/ChessProject/backend
+cd D:/chess/ChessProject/backend
 
 # Create a web.config file for Azure if it doesn't exist
 cat > web.config << 'EOF'

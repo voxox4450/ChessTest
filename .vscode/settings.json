@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/bae1a150-597b-4725-91d5-8e11948185ba/resourceGroups/PodstawowySzachy/providers/Microsoft.Web/sites/chesshkfrontend",
+    "appService.deploySubpath": "."
+}
