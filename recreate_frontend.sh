@@ -2,9 +2,9 @@
 # Script to update the frontend app service without deleting the resource
 
 # Set variables
-RESOURCE_GROUP="PodstawowySzachy"
-APP_SERVICE_PLAN="ASP-PodstawowySzachy-96f5"
-FRONTEND_APP="chessHKFrontend"
+RESOURCE_GROUP="ChessBasic"
+APP_SERVICE_PLAN="ASP-ChessBasic-8705"
+FRONTEND_APP="chesshkfrontend"
 BACKEND_URL="https://chesshkbackend.azurewebsites.net/"
 LOCATION="Poland Central "
 
@@ -35,7 +35,7 @@ az webapp config appsettings set \
 
 # Step 3: Prepare deployment package
 echo "Preparing deployment package..."
-cd D:/chess/ChessProject/frontend
+cd /mnt/d/chess/ChessProject/frontend
 
 # Make sure we're using the production versions of config files
 echo "Setting production configuration..."
@@ -96,7 +96,7 @@ REACT_APP_API_URL=$BACKEND_URL npm run build
 # Create a production package.json for deployment
 cat > package.json.prod << 'EOF'
 {
-  "name": "chessBSfrontend",
+  "name": "chessHKfrontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

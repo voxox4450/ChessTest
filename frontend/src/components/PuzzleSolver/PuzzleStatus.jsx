@@ -58,6 +58,9 @@ const PuzzleStatus = ({
             className={`${styles.motiveButton} ${selectedMotive === motive ? styles.selected : ''}`}
             onClick={() => {
               setSelectedMotive(motive);
+              if (currentPuzzle?.id) {
+                localStorage.removeItem(`awaiting_motive_${currentPuzzle.id}`);
+                }                    
             }}
           >
             {motive}

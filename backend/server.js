@@ -153,11 +153,28 @@ const initDb = () => {
           console.error("Error creating puzzle_move_times table:", err.message);
         } else {
           console.log("Puzzle move times table initialized");
+          createUserSessionTable();
         }
       }
     );
   };
-};
+  const createUserSessionTable = () => {
+    db.run(
+    `CREATE TABLE IF NOT EXISTS user_sessions (
+      user_id TEXT PRIMARY KEY,
+      exercise_ids TEXT NOT NULL,
+      current_index INTEGER DEFAULT 0
+      );`
+      ,(err) => {
+        if (err) {
+          console.error("Error creating user_sessions table:", err.message);
+        } else {
+          console.log("User sessions table initialized");
+       }
+      } 
+    )
+  };
+}
 
 // API Routes
 app.get("/api/health", (req, res) => {
@@ -375,32 +392,97 @@ app.post("/api/users/login", (req, res) => {
 
 
 // Get exercises for a session (requires auth)
-app.get("/api/exercises_test",authenticateToken,(req, res) => {
-    // Get exercises_test
-    db.all(
-      `SELECT e.* FROM exercises_test e`,
-      [],
-      (err, exercises_test) => {
-        if (err) {
-          console.error("Error fetching exercises_test:", err.message);
-          return res
-            .status(500)
-            .json({ error: "Server error fetching exercises_test" });
-        }
-        for (let i = exercises_test.length - 1; i > 0; i--){
-          const j = Math.floor(Math.random() * (i + 1));
-          [exercises_test[i], exercises_test[j]] = [exercises_test[j], exercises_test[i]];
-        }
-        // Log exercise fetch
-        console.log(
-          `Fetched ${exercises_test.length}`
-        );
-        console.log('exercises shuffled')
-        res.status(200).json(exercises_test);
+app.get("/api/exercises_test", authenticateToken, (req, res) => {
+  const userId = req.user.id;
+
+  db.get(
+    `SELECT exercise_ids FROM user_sessions WHERE user_id = ?`,
+    [userId],
+    (err, row) => {
+      if (err) {
+        console.error("DB fetch error:", err.message);
+        return res.status(500).json({ error: "Server error" });
       }
-    );
-  }
-);
+
+      if (row) {
+        const ids = JSON.parse(row.exercise_ids);
+        const placeholders = ids.map(() => '?').join(',');
+        db.all(
+          `SELECT * FROM exercises_test WHERE id IN (${placeholders})`,
+          ids,
+          (err, exercises) => {
+            if (err) {
+              return res.status(500).json({ error: "Fetch failed" });
+            }
+
+            const ordered = ids.map(id => exercises.find(e => e.id === id));
+            return res.status(200).json(ordered);
+          }
+        );
+      } else {
+        db.all(`SELECT * FROM exercises_test`, [], (err, allExercises) => {
+          if (err) {
+            return res.status(500).json({ error: "Load failed" });
+          }
+
+          for (let i = allExercises.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allExercises[i], allExercises[j]] = [allExercises[j], allExercises[i]];
+          }
+
+          const selected = allExercises.slice(0, 27);
+          const ids = selected.map(e => e.id);
+
+          db.run(
+            `INSERT INTO user_sessions (user_id, exercise_ids) VALUES (?, ?)`,
+            [userId, JSON.stringify(ids)],
+            (err) => {
+              if (err) {
+                return res.status(500).json({ error: "Insert failed" });
+              }
+              console.log(`Saved session for user ${userId}`);
+              res.status(200).json(selected);
+            }
+          );
+        });
+      }
+    }
+  );
+});
+
+app.post("/api/update_session_index", authenticateToken, (req, res) => {
+  const userId = req.user.id;
+  const { currentIndex } = req.body;
+
+  db.run(
+    `UPDATE user_sessions SET current_index = ? WHERE user_id = ?`,
+    [currentIndex, userId],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: "Update failed" });
+      }
+      res.status(200).json({ success: true });
+    }
+  );
+});
+
+app.get("/api/session_progress", authenticateToken, (req, res) => {
+  const userId = req.user.id;
+
+  db.get(
+    `SELECT current_index FROM user_sessions WHERE user_id = ?`,
+    [userId],
+    (err, row) => {
+      if (err) {
+        console.error("Error fetching session index:", err.message);
+        return res.status(500).json({ error: "Server error" });
+      }
+
+      const index = row?.current_index || 0;
+      res.status(200).json({ currentIndex: index });
+    }
+  );
+});
 
 // Start a test
 app.post("/api/exercises_test/start", authenticateToken, (req, res) => {

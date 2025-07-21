@@ -23,7 +23,7 @@ import { recordPuzzleResult, completeSessionLog } from '../../api/database';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionLogId, initialPuzzleIndex = 0 }) {
+function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, sessionLogId, initialPuzzleIndex = 0, updateSessionIndex}) {
   // State declarations
   const [game, setGame] = useState(new Chess(initialFen));
   const [currentPuzzle, setCurrentPuzzle] = useState(null);
@@ -80,6 +80,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         localStorage.removeItem(key);
       }
     }
+    const awaitingMotive = localStorage.getItem(`awaiting_motive_${puzzle.id}`) === 'true';
 
     // Parse the puzzle moves
     const { fen, moves, newChess, starting_color } = parsePuzzleMoves(puzzle, initialFen);
@@ -92,6 +93,19 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       moves: moves,
       starting_color: starting_color
     });
+
+    if (awaitingMotive) {
+    console.log('Puzzle is awaiting motive, loading in failed state');
+    setIsSolved(false);
+    setIsFailed(true);
+    setMoveIndex(0);
+    setReplayIndex(0);
+    setErrorMessage('');
+    setAnimateError(false);
+    setSelectedMotive(null);
+
+    return;
+  }
 
     // Reset state for new puzzle
     setIsSolved(false);
@@ -141,16 +155,19 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     }
   };
 
-  const handleNextPuzzle = () => {
+  const handleNextPuzzle = async() => {
     console.log("handling the next puzzle");
     setNextCliced(true);
     setSelectedMotive(null);
 
     if (currentPuzzle?.id) {
       localStorage.removeItem(`solution_end_${currentPuzzle.id}`);
+      localStorage.removeItem(`awaiting_motive_${currentPuzzle.id}`);
+
     }    
     const nextIndex = currentIndex + 1;
     if (nextIndex < exercises.length) {
+      await updateSessionIndex(nextIndex); 
       setCurrentIndex(nextIndex);
       loadPuzzle(nextIndex);
     } else {
@@ -159,7 +176,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         onComplete({
           puzzlesCompleted: completedExercises,
           totalPuzzles: exercises.length,
-          currentPuzzleIndex: 0, // Reset for next session
           attemptedExercises: attemptedExercises
         });
       }
@@ -237,7 +253,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           startTime: puzzleStartTime,
           isSolved: newMoveIndex >= currentPuzzle.moves.length,
           isFailed: false,
-          moveIndex: newMoveIndex
+          moveIndex: newMoveIndex,
+          selectedMotive: selectedMotive
         }));
 
         // Make computer's response move if needed
@@ -268,13 +285,15 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                   startTime: puzzleStartTime,
                   isSolved: newMoveIndex >= currentPuzzle.moves.length,
                   isFailed: false,
-                  moveIndex: newMoveIndex
+                  moveIndex: newMoveIndex,
+                  selectedMotive: selectedMotive
                 }));
 
                 // Check if puzzle is solved after computer's move
                 if (newMoveIndex >= currentPuzzle.moves.length) {
                   setIsSolved(true);
                   localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
+                  localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
                   setCompletedExercises(prev => prev + 1);
 
                   // Count as attempted if not already counted
@@ -294,6 +313,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         } else {
           // Puzzle is solved if no more computer moves
           setIsSolved(true);
+            localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
           localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
 
           setCompletedExercises(prev => prev + 1);
@@ -315,6 +335,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         setTotalIncorrectMoves(prev => prev + 1);
         triggerErrorAnimation();
         setIsFailed(true);
+        localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
 
         // Store failed state in localStorage
         localStorage.setItem('current_puzzle_data', JSON.stringify({
@@ -323,7 +344,8 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
           startTime: puzzleStartTime,
           isSolved: false,
           isFailed: true,
-          moveIndex: moveIndex
+          moveIndex: moveIndex,
+          selectedMotive: selectedMotive
         }));
 
         // Count as attempted if not already
@@ -363,8 +385,9 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
   const handleTimeUp = () => {
     if (isSolved) return;
 
-    console.log('Time up for puzzle, showing solution...');
+    console.log('Time up for puzzle');
     setIsFailed(true);
+    localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
     submitPuzzleResult(false)
 
     // Record the elapsed time
@@ -470,28 +493,10 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         onComplete({
           puzzlesCompleted: completedExercises,
           totalPuzzles: exercises.length,
-          currentPuzzleIndex: 0 // Reset for next session
         });
       }
     }
   }, [completedExercises, exercises.length, onComplete]);
-
-  // // Solution timer countdown
-  // useEffect(() => {
-  //   if (solutionTimer <= 0) return;
-
-  //   const timer = setTimeout(() => {
-  //     setSolutionTimer(prev => {
-  //       if (prev <= 1) {
-  //         // When timer reaches 0, move to next puzzle
-  //         return 0;
-  //       }
-  //       return prev - 1;
-  //     });
-  //   }, 1000);
-
-  //   return () => clearTimeout(timer);
-  // }, [solutionTimer]);
 
   // Auto-load next puzzle when solved
   useEffect(() => {
@@ -528,7 +533,6 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       onComplete?.({
         puzzlesCompleted: completedExercises,
         totalPuzzles: exercises.length,
-        currentPuzzleIndex: 0, // Reset for next session
         attemptedExercises: attemptedExercises
       });
     }
@@ -589,30 +593,26 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
             loadPuzzle(puzzleData.index);
           }
 
-          // Then restore the additional state
-          //const persistedStatus = localStorage.getItem(`puzzle-status-${puzzleData.puzzleId}`);
-          //const solutionEnd = localStorage.getItem(`solution_end_${puzzleData.puzzleId}`);
-          //let remaining = SOLUTION_DISPLAY_TIME;
+          const awaitingMotiveKey = `awaiting_motive_${exercises[puzzleData.index]?.id}`;
+          const isAwaitingMotive = localStorage.getItem(awaitingMotiveKey) === 'true';
 
-          // if (solutionEnd) {
-          //   const timeLeft = Math.ceil((parseInt(solutionEnd, 10) - Date.now()) / 1000);
-          //   remaining = Math.max(4, timeLeft);
-          // }
-
-          if (persistedStatus === 'solved') {
-            setIsSolved(true);
-            //setShowSolutionAfterSuccess(true);
-            //setShowSolution(true);
+          if (isAwaitingMotive) {
+            if (puzzleData.isSolved) {
+              setIsSolved(true);
+            } else if (puzzleData.isFailed) {
+              setIsFailed(true);
+            }
             setReplayIndex(0);
-            //setSolutionTimer(remaining);
+          } else {
+            if (persistedStatus === 'solved') {
+              setIsSolved(true);
+              setReplayIndex(0);
+            }
+            if (persistedStatus === 'failed') {
+              setIsFailed(true);
+              setReplayIndex(0);
+            }
           }
-          if (persistedStatus === 'failed') {
-            setIsFailed(true);
-            //setShowSolution(true);
-            setReplayIndex(0);
-            //setSolutionTimer(remaining);
-          }
-
 
           if (puzzleData.moveIndex > 0) {
             setMoveIndex(puzzleData.moveIndex);
@@ -676,27 +676,28 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
     }
   }, [currentPuzzle]);
 
-  // Render loading state
-  if (!exercises || exercises.length === 0) {
-    return (
-      <div className={styles.PuzzleSolver}>
-        <div className={styles.welcome}>
-          <h1>Welcome to Chess Puzzles!</h1>
-          <p>Loading puzzles...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Render completion state
   if (sessionCompleted) {
     return (
       <div className={styles.PuzzleSolver}>
         <div className={styles.sessionComplete}>
-          <h1>Session Complete!</h1>
-          <p>Thank you for completing this session.</p>
-          <p>Your next session will be available after 24 hours.</p>
-          <p>Correct puzzles: {completedExercises} / {exercises.length}</p>
+          <h1>Test Complete!</h1>
+          <p>Thank you for joining our team.</p>
+          <p>Your consistent approach has been invaluable to us.</p>
+          <p>If you have any questions please contact us at: chesspoject.research@gmail.com</p>
+        </div>
+      </div>
+    );
+  }
+
+    // Render loading state
+  if (!exercises || exercises.length === 0) {
+    return (
+      <div className={styles.PuzzleSolver}>
+        <div className={styles.welcome}>
+          <h1>Welcome to Chess Puzzles!</h1>
+          <p>Loading puzzles...</p>
         </div>
       </div>
     );

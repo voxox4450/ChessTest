@@ -82,7 +82,7 @@ const Login = ({ onLoginSuccess }) => {
                     if (dbError.response && dbError.response.status === 403 && dbError.response.data.next_available_at) {
                         setNextAvailableTime(new Date(dbError.response.data.next_available_at));
                         setHoursLeft(dbError.response.data.hours_left || 0);
-                        setError('You cannot login yet. Please wait 24 hours between sessions.');
+                        setError('You cannot login yet.');
                     } else {
                         console.warn('Trying API login');
                         try {

@@ -18,5 +18,9 @@
     "concurrently": "^8.2.2",
     "lodash": "^4.17.21",
     "react-chessboard": "^4.7.2"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.28.0",
+    "eslint": "^8.57.1"
   }
 }

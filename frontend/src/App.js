@@ -1,4 +1,5 @@
 import styles from './App.module.css';
+import stylesPuzzle from './components/PuzzleSolver/PuzzleSolver.module.css';
 import Login from './components/Login';
 import PuzzleSolver from './components/PuzzleSolver';
 import LogoutModal from './components/LogoutModal';
@@ -8,9 +9,8 @@ import LogoFooter from './components/LogoFooter';
 
 import { logout } from './api/users';
 import { useState, useEffect } from 'react';
-import { getExercisesForSession, createSessionLog } from './api/database';
+import { getExercisesForSession, createSessionLog, getCurrentSessionIndex, updateSessionIndex} from './api/database';
 
-// Maximum number of sessions in the study
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +32,7 @@ function App() {
     currentPuzzleIndex: 0
   });
   const [sessionStartTime, setSessionStartTime] = useState(null);
+
 
   const toggleMenu = () => {
     setHeadermenu(!headerMenu);
@@ -109,8 +110,11 @@ function App() {
         userInfo.userId,
         userInfo.username
       );
+            const currentIndex = await getCurrentSessionIndex();
       console.log('Exercises data received from API:', exerciseData);
+      console.log('Current session index:', currentIndex);
       setExercises(exerciseData);
+      setCurrentIndex(currentIndex);
 
       // Update total puzzles in session progress
       setSessionProgress(prev => ({
@@ -175,35 +179,6 @@ function App() {
     setShowLogoutModal(false);
   }
 
-  // Complete current session and advance to next
-  // const completeAndAdvanceSession = async () => {
-  //   const totalTimeSeconds = Math.floor((Date.now() - sessionStartTime) / 1000);
-
-  //   try {
-  //     await completeSessionLog(
-  //       sessionLogId,
-  //       totalTimeSeconds,
-  //       sessionProgress.puzzlesCompleted,
-  //       Math.min(sessionProgress.puzzlesCompleted, sessionProgress.totalPuzzles)
-  //     );
-
-  //     const now = new Date();
-  //     localStorage.setItem('last_session_time', now.toISOString());
-  //     localStorage.removeItem('current_puzzle_index');
-  //     localStorage.removeItem('puzzles_completed');
-  //     localStorage.removeItem('session_active');
-  //     localStorage.removeItem('session_log_id');
-  //     localStorage.removeItem('session_start_time');
-
-  //     console.log(`Session completed during logout. Advanced to session ${newSession}`);
-  //     return newSession;
-  //   } catch (error) {
-  //     console.error('Error completing session:', error);
-  //     return userInfo.currentSession;
-  //   }
-  // }
-
-
   // Function to cancel logout
   const cancelLogout = () => {
     setShowLogoutModal(false);
@@ -238,21 +213,13 @@ function App() {
       console.log(`Session completed. Advanced to session`);
 
       setSessionActive(false);
-      setShowInstructions(true);
-      setSessionProgress({
-        puzzlesCompleted: 0,
-        totalPuzzles: 0,
-        currentPuzzleIndex: 0
-      });
+      setShowInstructions(false);
+
     } catch (error) {
       console.error('Error updating session:', error);
+
       setSessionActive(false);
-      setShowInstructions(true);
-      setSessionProgress({
-        puzzlesCompleted: 0,
-        totalPuzzles: 0,
-        currentPuzzleIndex: 0
-      });
+      setShowInstructions(false);
     }
   };
 
@@ -373,32 +340,6 @@ function App() {
     );
   }
 
-  // // User has completed all sessions
-  // if (hasCompletedAllSessions()) {
-  //   return (
-  //     <div className={styles.appWrapper}>
-  //       <div className={styles.headerBar}>
-  //         <div className={styles.userProfile}>
-  //           <div className={styles.profileIcon}>{getUserInitials()}</div>
-  //           <div className={styles.userInfo}>
-  //             <span>User: {userInfo.username}</span>
-  //           </div>
-  //         </div>
-  //         <div className={styles.appTitle}>Chess Research Project Test</div>
-  //         <div className={styles.headerActions}>
-  //           <ThemeToggle />
-  //           <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
-  //         </div>
-  //       </div>
-  //       <StudyCompleted
-  //         username={userInfo.username}
-  //         onLogout={performLogout}
-  //       />
-  //       <LogoFooter />
-  //     </div>
-  //   );
-  // }
-
   // Loading state
   if (loading) {
     return (
@@ -515,46 +456,37 @@ function App() {
   }
 
   // Display user info and session start button
-  if (!sessionActive) {
-
-    return (
-      <div className={styles.appWrapper}>
-        {renderLogoutModal(getSessionInfo())}
-        <div className={styles.headerBar}>
-          <div className={styles.userProfile}>
-            <div className={styles.profileIcon}>{getUserInitials()}</div>
-            <div className={styles.userInfo}>
-              <span>User: {userInfo.username}</span>
-            </div>
-          </div>
-          <div className={styles.appTitle}>Chess Research Project Test</div>
-          <div className={styles.headerActions}>
-            <ThemeToggle />
-            <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
+if (!sessionActive) {
+  return (
+    <div className={styles.appWrapper}>
+      {renderLogoutModal(getSessionInfo())}
+      <div className={styles.headerBar}>
+        <div className={styles.userProfile}>
+          <div className={styles.profileIcon}>{getUserInitials()}</div>
+          <div className={styles.userInfo}>
+            <span>User: {userInfo.username}</span>
           </div>
         </div>
-        <div className={styles.sessionStart}>
-          <div className={styles.startSessionContainer}>
-            <h2>Chess Puzzle Test</h2>
-            <p>Ready to solve some chess puzzles?</p>
-            <button
-              onClick={() => setShowInstructions(true)}
-              className={styles.instructionsButton}
-            >
-              View Instructions
-            </button>
-            <button
-              onClick={startSession}
-              className={styles.startSessionButton}
-            >
-              Start Puzzle Session
-            </button>
+        <div className={styles.appTitle}>Chess Research Project Test</div>
+        <div className={styles.headerActions}>
+          <ThemeToggle />
+          <button onClick={handleLogout} className={styles.logoutButton}>Logout</button>
+        </div>
+      </div>
+      <div>
+        <div className={stylesPuzzle.PuzzleSolver}>
+          <div className={stylesPuzzle.sessionComplete}>
+            <h1>Test Complete!</h1>
+            <p>Thank you for joining our team.</p>
+            <p>We really appreciate the time and effort you put in.</p>
+            <p>If you have any questions please contact us at: chesspoject.research@gmail.com</p>
           </div>
         </div>
         <LogoFooter />
       </div>
-    );
-  }
+    </div>
+  );
+}
 
 
   // Render the PuzzleSolver with the loaded exercises
@@ -588,6 +520,7 @@ function App() {
             userId={userInfo.userId}
             sessionLogId={sessionLogId}
             initialPuzzleIndex={sessionProgress.currentPuzzleIndex}
+            updateSessionIndex={updateSessionIndex}
           />
         </div>
       </div>

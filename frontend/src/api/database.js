@@ -72,6 +72,34 @@ export const getExercisesForSession = async () => {
   }
 };
 
+export const updateSessionIndex = async (currentIndex) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/update_session_index`,
+      { currentIndex },
+      getAuthConfig()
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error updating session index:', error);
+    throw error;
+  }
+};
+
+export const getCurrentSessionIndex = async () => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/session_progress`,
+      getAuthConfig()
+    );
+    return response.data.currentIndex || 0;
+  } catch (error) {
+    console.error('Error fetching session index:', error);
+    return 0;
+  }
+};
+
 // Session and puzzle results functions
 export const createSessionLog = async (userId) => {
   try {
