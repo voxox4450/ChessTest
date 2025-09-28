@@ -486,6 +486,12 @@
     transition: transform 0.3s ease;
 }
 
+.loginForm button[type="submit"] {
+  align-self: stretch;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .loginForm button[type="submit"]:hover .chessIcon {
     transform: scale(1.1) rotate(10deg);
 }

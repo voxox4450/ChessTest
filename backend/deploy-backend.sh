@@ -7,6 +7,9 @@ APP_SERVICE_PLAN="ASP-ChessBasic-8705"
 BACKEND_APP="chesshkbackend"
 FRONTEND_URL="https://chesshkfrontend.azurewebsites.net"
 
+ALLOWED_LIST="$FRONTEND_URL,https://chessbsbackend.azurewebsites.net"
+ALLOWED_LIST=$(echo $ALLOWED_LIST | tr -d ' ') 
+
 # Step 1: Create or update the backend app service
 echo "Creating/updating backend app service..."
 az webapp create \
@@ -23,9 +26,11 @@ az webapp config appsettings set \
   --name $BACKEND_APP \
   --settings \
   WEBSITE_NODE_DEFAULT_VERSION=~18 \
-  ALLOWED_ORIGINS=$FRONTEND_URL \
+  ALLOWED_ORIGINS="$ALLOWED_LIST" \
   JWT_SECRET="chess-trainer-jwt-secret-key" \
-  NODE_ENV="production"
+  NODE_ENV="production" 
+
+#  # ALLOWED_ORIGINS=$FRONTEND_URL \
 
 # Step 3: Prepare deployment package
 echo "Preparing deployment package..."
@@ -83,6 +88,11 @@ az webapp cors add \
   --resource-group $RESOURCE_GROUP \
   --name $BACKEND_APP \
   --allowed-origins $FRONTEND_URL
+
+az webapp cors add \
+  --resource-group $RESOURCE_GROUP \
+  --name $BACKEND_APP \
+  --allowed-origins https://chessbsbackend.azurewebsites.net
 
 # Step 6: Configure always on
 echo "Configuring always on..."

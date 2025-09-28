@@ -9,7 +9,7 @@ import LogoFooter from './components/LogoFooter';
 
 import { logout } from './api/users';
 import { useState, useEffect } from 'react';
-import { getExercisesForSession, createSessionLog, getCurrentSessionIndex, updateSessionIndex} from './api/database';
+import { getExercisesForSession, createSessionLog, getCurrentSessionIndex, updateSessionIndex, getUserGroupFromDb} from './api/database';
 
 
 function App() {
@@ -32,6 +32,7 @@ function App() {
     currentPuzzleIndex: 0
   });
   const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [surveyLink, setSurveyLink] = useState(null);
 
 
   const toggleMenu = () => {
@@ -53,6 +54,28 @@ function App() {
     }
   }, [sessionActive]);
 
+  useEffect(() => {
+  const fetchGroupId = async () => {
+    try {
+      const groupId = await getUserGroupFromDb();
+
+      const links = {
+        1: "https://ipsuj.qualtrics.com/jfe/form/SV_8x0kpMpDdQBowxU",
+        2: "https://ipsuj.qualtrics.com/jfe/form/SV_bekMqRvrqNPf3wy",
+        3: "https://ipsuj.qualtrics.com/jfe/form/SV_77NqMTqwt0lpwCa",
+        4: "https://ipsuj.qualtrics.com/jfe/form/SV_d5VkCieSsD8yBGS"
+      };
+
+      setSurveyLink(links[groupId]);
+    } catch (error) {
+      console.error("Failed to fetch group ID:", error);
+    }
+  };
+
+  if (!sessionActive) {
+    fetchGroupId();
+  }
+}, [sessionActive]);
 
   // Restore user session from localStorage
   const restoreUserSession = () => {
@@ -224,6 +247,7 @@ function App() {
   };
 
 
+
   // Add handler to update progress during session
   const handleProgressUpdate = (progress) => {
     // Store current progress in localStorage
@@ -391,39 +415,22 @@ function App() {
           <div className={styles.instructions}>
             <h2>Instructions</h2>
             <div className={`${styles.instructionsContent} dark-mode-card`}>
-              <ol>
-                <li><span>You will  </span><strong><span>complete the final test.</span></strong><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>Your task is to solve chess puzzles, just like in the training sessions.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>Try </span><strong><span>to solve as many puzzles correctly as possible</span></strong><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have </span><strong><span>2 minutes to solve each puzzle </span></strong><span>– during this time, depending on the task, </span><span><strong>you will need to make between one and three moves</strong></span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have only, </span><strong><span>one attempt to find the correct solution </span></strong><span>so think carefully before making a move</span><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have </span><strong><span>2 minutes to solve each puzzle</span></strong> <span>&ndash; in that time </span><strong><span>you will need to make </span></strong><strong><span>between one and three moves</span></strong><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>You have only </span><strong><span>one attempt to find the correct solution</span></strong><span>, so think carefully before making a move.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>This time, </span><strong><span>you will not receive feedback </span></strong><span>on whether your solution is correct or not.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>The test may include </span><strong><span>puzzles you solved during training sessions and new ones</span></strong><span>.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>The test will take you a </span><span><strong>maximum of 60 minutes. There are no scheduled breaks during the final test</strong></span><span>. Please complete the test at one time.</span><span>&nbsp;</span></li>
-              </ol>
-              <ol>
-                <li><span>For questions about the study, please contact the researchers at: </span><span><b><span>chesspoject.research@gmail.com</span></b> </span><span>&nbsp;</span></li>
-              </ol>
+              <h3>Test Overview</h3>
+                <p>
+                  You will <strong>complete the final test.</strong> Your task is to solve chess puzzles, just like in the training sessions. 
+                  <strong>Try to solve as many puzzles correctly as possible.</strong>
+                </p>
+              <h3>Solving Rules</h3>
+                <p>Every puzzle has only one correct solution. You have <strong>2 minutes to solve each puzzle</strong> – during this time, depending on the task, <strong>you will need to make between one and three moves.</strong> You have only one attempt to find the correct solution, so think carefully before making a move.</p>
+
+              <h3>Feedback</h3>
+                <p>This time,<strong> you will not receive feedback </strong> on whether your solution is correct or not. The test may include <strong>puzzles you solved during training sessions and new ones.</strong></p>
+
+              <h3>Test Duration</h3>
+                <p>The test will take you a <strong> maximum of 60 minutes. There are no scheduled breaks during the final test.</strong> Please complete the test at one time.</p>
+
+              <h3>Contact</h3>
+                <p>For questions about the study, please contact the researchers at: <strong>chessproject.research@gmail.com</strong></p>
               {/* <p><strong><span>After completing 5 training sessions, you will be asked via email to participate in the final test.</span></strong><span>&nbsp;</span></p> */}
               {/* {isLastSession && (
                 <div className={styles.finalSessionNote}>
@@ -455,7 +462,7 @@ function App() {
     );
   }
 
-  // Display user info and session start button
+// Display user info and session start button
 if (!sessionActive) {
   return (
     <div className={styles.appWrapper}>
@@ -477,9 +484,17 @@ if (!sessionActive) {
         <div className={stylesPuzzle.PuzzleSolver}>
           <div className={stylesPuzzle.sessionComplete}>
             <h1>Test Complete!</h1>
-            <p>Thank you for joining our team.</p>
-            <p>We really appreciate the time and effort you put in.</p>
-            <p>If you have any questions please contact us at: chesspoject.research@gmail.com</p>
+            <p>Thank you for completing the test. As the final step, please complete a short survey by clicking the following link:</p>
+            {surveyLink ? (
+            <p>
+              <a href={surveyLink} target="_blank" rel="noopener noreferrer">
+                → Click here to take the survey ←
+              </a>
+            </p>
+          ) : (
+            <p>Loading your personalized survey link...</p>
+          )}
+            <p>If you have any questions please contact us at: chessproject.research@gmail.com</p>
           </div>
         </div>
         <LogoFooter />

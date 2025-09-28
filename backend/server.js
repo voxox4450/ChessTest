@@ -7,23 +7,33 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 const { error } = require("console");
 const saltRounds = 10;
-//const axios = require("axios");
+const API_KEY = process.env.API_KEY
 
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || "chess-trainer-jwt-secret-key"; // Use env variable in production
 
+
 // Middleware
 app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.ALLOWED_ORIGINS || "*"
+        ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
         : "*",
   })
 );
+
+// app.use(
+//   cors({
+//     origin: "*",
+//   })
+// );
+
+
 app.use(bodyParser.json());
+
 
 // Database path - for production, use Azure storage mounted path if available
 const dbPath =
@@ -62,7 +72,9 @@ const initDb = () => {
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      group_id INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )`,
     (err) => {
       if (err) {
@@ -183,7 +195,7 @@ app.get("/api/health", (req, res) => {
 
 // User registration
 app.post("/api/users/register", (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, group_id} = req.body;
 
   // Check if user exists
   db.get(
@@ -211,8 +223,8 @@ app.post("/api/users/register", (req, res) => {
 
         // Insert new user with hashed password
         db.run(
-          "INSERT INTO users (username, password) VALUES (?, ?)",
-          [username, hashedPassword],
+          "INSERT INTO users (username, password, group_id) VALUES (?, ?, ?)",
+          [username, hashedPassword, group_id],
           function (err) {
             if (err) {
               console.error("Error inserting user:", err.message);
@@ -239,6 +251,7 @@ app.post("/api/users/register", (req, res) => {
               message: "User registered successfully",
               user_id: userId,
               username,
+              group_id,
               access_token: token,
             });
           }
@@ -248,14 +261,65 @@ app.post("/api/users/register", (req, res) => {
   }
 );
 
+app.post("/api/users/new_register", (req, res) => {
+  //API K3y
+  const apiKey = req.headers["x-api-key"];
+  if (apiKey !== API_KEY) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const { username, password, group_id } = req.body;
+
+  if (!username || !password || group_id == null) {
+    return res.status(400).json({ error: "Missing username or password" });
+  }
+
+  // check, user exists
+  db.get("SELECT id FROM users WHERE username = ?", [username], (err, existingUser) => {
+    if (err) {
+      console.error("Error checking existing user:", err.message);
+      return res.status(500).json({ error: "Server error" });
+    }
+
+    if (existingUser) {
+      return res.status(200).json({ message: "User already exists" });
+    }
+
+    // add user with username and password
+    db.run(
+      "INSERT INTO users (username, password, group_id) VALUES (?, ?, ?)",
+      [username, password, group_id],
+      function (err) {
+        if (err) {
+          console.error("Error inserting new user:", err.message);
+          return res.status(500).json({ error: "Server error inserting user" });
+        }
+
+        const userId = this.lastID;
+
+        // token JWT
+        const token = jwt.sign({ id: userId, username }, JWT_SECRET, { expiresIn: "24h" });
+
+        console.log(`User ${username} added from other backend`);
+
+        res.status(201).json({
+          message: "User added successfully",
+          user_id: userId,
+          username,
+          group_id,
+          access_token: token,
+        });
+      }
+    );
+  });
+});
+
 // User login
-// TODO: sprawdzenie czy jest 5 sesji z backu bartka na mój 
 app.post("/api/users/login", (req, res) => {
   const { username, password } = req.body;
 
-  // Find user
   db.get(
-    "SELECT id, username, password FROM users WHERE username = ?",
+    "SELECT id, username, password, created_at FROM users WHERE username = ?",
     [username],
     (err, user) => {
       if (err) {
@@ -267,7 +331,6 @@ app.post("/api/users/login", (req, res) => {
         return res.status(401).json({ error: "Invalid username or password" });
       }
 
-      // Compare password with hash
       bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
           console.error("Error comparing passwords:", err.message);
@@ -275,120 +338,55 @@ app.post("/api/users/login", (req, res) => {
         }
 
         if (!isMatch) {
-          return res
-            .status(401)
-            .json({ error: "Invalid username or password" });
+          return res.status(401).json({ error: "Invalid username or password" });
         }
-        //axios.get(`https://chessbsbackend.azurewebsites.net/api/session-status/${user.id}`, {
 
-        // })
-        // .then(response => {
-        //   const { sessions_completed, next_available_at } = response.data;
-        //   const now = new Date();
+        const createdAt = new Date(user.created_at);
+        const now = new Date();
+        const hoursSinceCreated = (now - createdAt) / (1000 * 60 * 60);
 
-        //   if (sessions_completed >= 5 && next_available_at) {
-        //     const nextAvailable = new Date(next_available_at);
+        if (hoursSinceCreated < 24) {
+          return res.status(403).json({
+            error: "You must wait 24 hours after registration to log in.",
+            hours_left: Math.ceil(24 - hoursSinceCreated),
+          });
+        }
 
-        //     if (now < nextAvailable) {
-        //       const hoursLeft = Math.ceil((nextAvailable - now) / (1000 * 60 * 60));
-        //       return res.status(403).json({
-        //         error:
-        //           "You have completed all sessions. Please wait until your final session delay is over before starting the test.",
-        //         next_available_at,
-        //         hours_left: hoursLeft,
-        //       });
-        //     }
-        //   }
-        // Check if there's a completed session
-        db.get(
-          // checking for 5 completed sessions elsewhere.
-          "SELECT * FROM session_logs WHERE user_id = ? AND completed = 1 ORDER BY end_time DESC LIMIT 1",
-          [user.id],
-          (err, lastSession) => {
-            if (err) {
-              console.error("Error checking last session:", err.message);
-              return res
-                .status(500)
-                .json({ error: "Server error checking session availability" });
-            }
-
-            const now = new Date();
-
-            // Only check time restriction if the user has completed a session before
-            if (lastSession && lastSession.next_available_at) {
-              const nextAvailable = new Date(lastSession.next_available_at);
-
-              if (now < nextAvailable) {
-                // Calculate hours left
-                const hoursLeft = Math.ceil(
-                  (nextAvailable - now) / (1000 * 60 * 60)
-                );
-
-                return res.status(403).json({
-                  error:
-                    "You cannot login yet. Please end all 5 sessions before you start test.",
-                  next_available_at: lastSession.next_available_at,
-                  hours_left: hoursLeft,
-                });
-              }
-            }
-          
-
-            // If we get here, the user can login
-            // Generate token
-            const token = jwt.sign(
-              { id: user.id, username: user.username},
-              JWT_SECRET,
-              { expiresIn: "24h" }
-            );
-
-            // Log login
-            console.log(
-              `User logged in: ${user.username}`
-            );
-
-            // Add next_available_at to the response if it exists
-            const loginResponse = {
-              message: "Login successful",
-              user_id: user.id,
-              username: user.username,
-              access_token: token,
-            };
-
-            if (lastSession && lastSession.next_available_at) {
-              loginResponse.next_available_at = lastSession.next_available_at;
-            }
-
-            res.status(200).json(loginResponse);
-          }
+        const token = jwt.sign(
+          { id: user.id, username: user.username },
+          JWT_SECRET,
+          { expiresIn: "24h" }
         );
+
+        console.log(`User logged in: ${user.username}`);
+
+        res.status(200).json({
+          message: "Login successful",
+          user_id: user.id,
+          username: user.username,
+          access_token: token,
+        });
       });
     }
   );
 });
-//});
 
-// // Update user complete exercise (requires auth)
-// app.get("/api/users/:userId/session-status", authenticateToken, (req, res) => {
-//   const { userId } = req.params;
+app.get("/api/users/group", authenticateToken, (req, res) => {
+  const userId = req.user.id;
 
-//   db.get(
-//     `SELECT completed FROM session_logs WHERE user_id = ? ORDER BY end_time DESC LIMIT 1`,
-//     [userId],
-//     (err, session) => {
-//       if (err) {
-//         console.error("Error checking session:", err.message);
-//         return res.status(500).json({ error: "Server error checking session" });
-//       }
+  db.get("SELECT group_id FROM users WHERE id = ?", [userId], (err, row) => {
+    if (err) {
+      console.error("Error fetching group_id:", err.message);
+      return res.status(500).json({ error: "Server error" });
+    }
 
-//       const isCompleted = session ? session.completed === 1 : false;
+    if (!row) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-//       res.status(200).json({
-//         session_completed: isCompleted,
-//       });
-//     }
-//   );
-// });
+    res.status(200).json({ group_id: row.group_id });
+  });
+});
 
 
 // Get exercises for a session (requires auth)

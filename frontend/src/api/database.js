@@ -54,6 +54,20 @@ export const loginUserFromDb = async (username, password) => {
   }
 };
 
+export const getUserGroupFromDb = async () => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/users/group`,
+      getAuthConfig()
+    );
+    return response.data.group_id;
+  } catch (error) {
+    console.error('Error fetching user group:', error);
+    throw error;
+  }
+};
+
+
 export const updateUserSession = async (userId) => {
 };
 

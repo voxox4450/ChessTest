@@ -184,7 +184,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
   // Handle user moves
   const handleMove = (sourceSquare, targetSquare) => {
-    if (isSolved /*|| showSolution*/ || !currentPuzzle) return false;
+    if (isSolved || isFailed || !currentPuzzle) return false;
 
     // Clear any previous error
     setErrorMessage('');
@@ -245,6 +245,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
       if (uciMove === expectedMove) {
         setTotalCorrectMoves(prev => prev + 1);
         let newMoveIndex = moveIndex + 1;
+        setMoveIndex(newMoveIndex);
 
         // Update localStorage with current state
         localStorage.setItem('current_puzzle_data', JSON.stringify({
@@ -274,6 +275,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
               if (computerResult) {
                 const newGameFen = game.fen();
                 setGame(new Chess(newGameFen)); // This ensures the UI updates
+                
                 newMoveIndex++;
                 setMoveIndex(newMoveIndex);
 
@@ -291,6 +293,7 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
                 // Check if puzzle is solved after computer's move
                 if (newMoveIndex >= currentPuzzle.moves.length) {
+                  setTimeout(() => {
                   setIsSolved(true);
                   localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
                   localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
@@ -304,16 +307,19 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
                   setReplayIndex(0);
                   // Update progress with new completion count
                   updateProgress(currentIndex);
-                }
+                },600);
+              }
               }
             } catch (error) {
               console.error("Computer move error:", error);
             }
-          }, 300); // Small delay before computer move
+          }, 600); // Small delay before computer move
+        
         } else {
+          setTimeout(() => {
           // Puzzle is solved if no more computer moves
           setIsSolved(true);
-            localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
+          localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
           localStorage.setItem(`puzzle-status-${currentPuzzle.id}`, 'solved');
 
           setCompletedExercises(prev => prev + 1);
@@ -329,15 +335,18 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
 
           // Update progress with new completion count
           updateProgress(currentIndex);
-        }
+        },600);
+      }
       } else {
         // It's a legal move but not the correct solution
         setTotalIncorrectMoves(prev => prev + 1);
         triggerErrorAnimation();
-        setIsFailed(true);
-        localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
 
+        setTimeout(() => {
+        setIsFailed(true);
+        setElapsedPuzzleTime(Math.floor((Date.now() - puzzleStartTime) / 1000));
         // Store failed state in localStorage
+        localStorage.setItem(`awaiting_motive_${currentPuzzle.id}`, 'true');
         localStorage.setItem('current_puzzle_data', JSON.stringify({
           index: currentIndex,
           puzzleId: currentPuzzle.id,
@@ -361,11 +370,11 @@ function PuzzleSolver({ exercises, onComplete, onProgressUpdate, userId, session
         const timeSpent = Math.floor((Date.now() - puzzleStartTime) / 1000);
         setElapsedPuzzleTime(timeSpent);
 
-        // Submit puzzle result to backend
+        // // Submit puzzle result to backend
         submitPuzzleResult(false);
 
         // Update progress
-        updateProgress(currentIndex);
+        updateProgress(currentIndex);}, 600);
 
         return false;
       }

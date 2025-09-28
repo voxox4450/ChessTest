@@ -349,11 +349,11 @@
     margin-bottom: 1rem;
   }
 
-  .instructionsContent p:first-of-type {
+  /* .instructionsContent p:first-of-type {
     position: relative;
     padding-left: 30px;
-  }
-
+  } */
+/* 
   .instructionsContent p:first-of-type::before {
     content: '♟';
     position: absolute;
@@ -362,7 +362,7 @@
     font-size: 1.4rem;
     color: var(--primary-color, #7160e8);
     opacity: 0.8;
-  }
+  } */
 
   .instructionsContent ul {
     margin: 1rem 0;

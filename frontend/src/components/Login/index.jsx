@@ -12,6 +12,8 @@ const Login = ({ onLoginSuccess }) => {
     const [error, setError] = useState('');
     const [nextAvailableTime, setNextAvailableTime] = useState(null);
     const [hoursLeft, setHoursLeft] = useState(0);
+    const [minutesLeft, setMinutesLeft] = useState(0);
+    const [secondsLeft, setSecondsLeft] = useState(0);
     const [isRegistering, setIsRegistering] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showConsentText, setShowConsentText] = useState(true);
@@ -20,6 +22,36 @@ const Login = ({ onLoginSuccess }) => {
     const [hasReadInfo, setHasReadInfo] = useState(false);
     const [checkboxAccepted, setCheckboxAccepted] = useState(false);
 
+    useEffect(() => {
+  let interval;
+
+  if (nextAvailableTime) {
+    interval = setInterval(() => {
+      const now = new Date();
+      const diff = nextAvailableTime - now;
+
+      if (diff <= 0) {
+        clearInterval(interval);
+        setNextAvailableTime(null);
+        setHoursLeft(0);
+        setMinutesLeft(0);
+        setSecondsLeft(0);
+        setError('');
+      } else {
+        const totalSeconds = Math.floor(diff / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        setHoursLeft(hours);
+        setMinutesLeft(minutes);
+        setSecondsLeft(seconds);
+      }
+    }, 1000);
+  }
+
+  return () => clearInterval(interval);
+}, [nextAvailableTime]);
     
     const handleSwitchToRegister = () => {
         setIsRegistering(true);
@@ -79,10 +111,21 @@ const Login = ({ onLoginSuccess }) => {
                     onLoginSuccess();
                 } catch (dbError) {
                     console.warn('Direct DB login failed:', dbError);
-                    if (dbError.response && dbError.response.status === 403 && dbError.response.data.next_available_at) {
-                        setNextAvailableTime(new Date(dbError.response.data.next_available_at));
-                        setHoursLeft(dbError.response.data.hours_left || 0);
-                        setError('You cannot login yet.');
+                    if (dbError.response && dbError.response.status === 403) {
+                    const errorData = dbError.response.data;
+
+                    if (errorData.error?.includes("24 hours")) {
+                    const now = new Date();
+                    const availableAt = new Date(now.getTime() + (errorData.hours_left || 0) * 60 * 60 * 1000);
+                    setNextAvailableTime(availableAt);
+                    setError(errorData.error);
+                    return;
+                    }
+
+                    // Domyślna wiadomość błędu 403
+                    setError(errorData.error || 'You are not allowed to login yet.');
+                    return;
+                    
                     } else {
                         console.warn('Trying API login');
                         try {
@@ -149,9 +192,14 @@ const Login = ({ onLoginSuccess }) => {
 
 
                 {error && (
-                    <div className={styles.error}>
-                        <p>{error}</p>
-                    </div>
+                <div className={styles.error}>
+                    <p>{error}</p>
+                    {nextAvailableTime && (
+                    <p style={{ marginTop: '0.5rem', color: '#ffcc00' }}>
+                        You can log in in {hoursLeft}h {minutesLeft}m {secondsLeft}s.
+                    </p>
+                    )}
+                </div>
                 )}
 
 
@@ -213,17 +261,20 @@ const Login = ({ onLoginSuccess }) => {
                         </>
                     )}
                 </button>
-
+{/* 
                 <div className={styles.switchModeContainer}>
+
                     <button
                         type="button"
                         onClick={isRegistering ? () => setIsRegistering(false) : handleSwitchToRegister}
                         className={styles.switchModeButton}
                         disabled={loading || showResearchInfoModal}
                     >
-                        {isRegistering ? 'Already have an account? Login' : 'New? Register'}
+                        {/* {isRegistering ? 'Already have an account? Login' : 'New? Register'}
                     </button>
+                
                 </div>
+                */}
             </form>
         </div>
     );
