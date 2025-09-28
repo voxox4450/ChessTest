@@ -28,7 +28,8 @@ az webapp config appsettings set \
   WEBSITE_NODE_DEFAULT_VERSION=~18 \
   ALLOWED_ORIGINS="$ALLOWED_LIST" \
   JWT_SECRET="chess-trainer-jwt-secret-key" \
-  NODE_ENV="production" 
+  NODE_ENV="production" \
+  DB_PATH="/home/site/wwwroot/chess_exercises.db"
 
 #  # ALLOWED_ORIGINS=$FRONTEND_URL \
 
